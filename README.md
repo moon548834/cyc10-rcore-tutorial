@@ -1,2 +1,2 @@
-# Initial page
+这是一个关于cyc10上运行rcore操作系统的指导书，仍在测试中...
 
