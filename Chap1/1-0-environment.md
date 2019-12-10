@@ -1,4 +1,4 @@
-#一些环境搭建说明
+# 一些环境搭建说明
 
 本工程在windows10操作系统下进行，涉及到的软件如 Quartus 18.0(prime), modelsim 等均在windows下使用
 
