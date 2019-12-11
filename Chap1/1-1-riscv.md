@@ -21,13 +21,3 @@
 接下来在任何一个地方命令行输入 riscv32 后输入两次 Tab, 应该会有自动补全成 **riscv32-unknown-elf-** 并显示若干编译链工具，至此编译链安装成功。
 
 如果安装了qemu，可以交叉一个riscv32格式的helloworld，并用qemu-riscv32运行之，用以简单的测试。
-
-# RISCV测例
-
-对于测例来讲，我参考了部分zwp的工作，https://github.com/oscourse-tsinghua/undergraduate-zwpu2019 
-
-同时也结合了最新的RISCV测例 https://github.com/riscv/riscv-tools
-
-需要注意的是，zwp的工作中使用的第三方软核picrov32并**不能完善地支持特权级架构，并且有一些自定义的指令**，所以第一个连接中针对该CPU进行了一些宏定义。然而我采用的CPU是比较完善的，所以对于zwp的工作需要进行适当修改。
-
-

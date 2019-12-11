@@ -6,8 +6,8 @@ Berkeley Boot Loader (BBL) 是 M 态的程序，可以引导我们移植的 BBL-
 ## step1
 
 相关代码： 
- - `./machine/mentry.S`
- - `./machine/minit.c`
+- `./machine/mentry.S`
+- `./machine/minit.c`
 
  在运行BBL之前，首先应将BBL置于内存0x8000_0000之后的位置，0x8000_0000处对应的时`./machine/mentry.S`中的一条跳转到do_reset指令。之后跳转到do_reset时首先进行的是寄存器清零，置mscratch为0。接下来将mtvec设置为trap_vector的地址，并进行检测。设置sp为binary最后的位置(页对齐)，跳转到 **init_first_hart** 。对应代码如下：
 
@@ -72,7 +72,9 @@ Berkeley Boot Loader (BBL) 是 M 态的程序，可以引导我们移植的 BBL-
 
 ## step2
 
-跳转到 **init_first_hart** 这个C语言函数后，进行了一些列初始化的工作，包括M态的一些csr设置，fp初始化，解析在地址0x00001000处的config_string，初始化中断，初始化内存单元，及以上相关操作的检测，最后是加载OS，具体函数位于 `./machine/minit,c`
+跳转到 **init_first_hart** 这个C语言函数后，进行了一些列初始化的工作，包括M态的一些csr设置，fp初始化，解析在地址0x00001000处的config_string，初始化中断，初始化内存单元，及以上相关操作的检测，最后是加载OS，具体函数位于 
+- `./machine/minit,c`
+- `./machine/
 
 ```c
 void init_first_hart()
@@ -138,6 +140,9 @@ medeleg = (1U << CAUSE_MISALIGNED_FETCH) |
 
 **parse_config_string**: 这个函数的主要功能就是读取位于0x0000_1000中的一些config然后软件进行相应的设置，为了节省启动时间与fpga的空间，我对此部分进行了一定优化，具体说来就是在bbl写死这些config的值，而不是从硬件上去读取。因为无论如何总归要在硬件上或者软件上指定这些参数(SDRAM的起始位置，大小，UART地址等)，所以个人认为从软件上写死不仅可以节省查询config的时间，而且也节省了fpga的资源，也加快了仿真的进度。
 
+代码位于：
+- 
+
 > 我使用的板子逻辑资源只有15.5k，当我综合这个SOC的时候，已经用了15k(98%).. 这还是在进行了一些优化的情况下 所以能省则省..
 
 举个例子来讲，对于 `query_mem` 这个函数而言，他希望获取的是ram的地址和大小，所以我们通过注释掉query_config_string相关操作，就可以不必从硬件上获取，而是直接幅值即可，其余的query函数以此类推。
@@ -173,6 +178,8 @@ first_free_paddr = sbi_top_paddr() + num_harts * RISCV_PGSIZE;
 ## step3 boot_loader
 
 进行完以上的初始化任务后，进入到boot_loader函数中，首先打印loading OS的字符串，接下来进入load_kernel_elf这个函数加载elf格式的OS，然后是S态支持虚拟内存的一些初始化过程，接下来打印logo，刷tlb，最终进入到S态的OS中，至此所有的bootloader工作全部结束，控制权交给OS kernel。
+
+代码位于 ./bbl/bbl.c ./bbl/kernel_elf.c
 
 ```c
 log("machine mode: loading payload OS...");
