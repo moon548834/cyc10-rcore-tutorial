@@ -9,7 +9,6 @@ soc则基于《自己动手写CPU》(雷思磊)结构，采用的是wishbone总�
 ## 五级流水架构
 
 <div align=center><img src="../picture/pipeline.png" width = "50%" height = "50%" align="center"/></div>
-![PNG](\picture\pipeline.png)
 
 这只是一个简单的示意图，如果没有相关的基础知识理解起来还是比较困难的，我这里推荐一本书，名字是《计算机组成与设计——硬件软件接口》作者是Patterson和Hennessy，里面有详细的过于MIPS架构的介绍，事实上MIPS和RISCV从架构上讲都属于精简指令集，而且很多结构都比较相似，所以不必拘泥于一定要找riscv的书。另外如果接触源码的话，之前推荐的雷思磊写的是一本不错的书，不过学习过程不能只是抄源码，还是要多去理解才有更大的收获的。
 
@@ -18,7 +17,6 @@ soc则基于《自己动手写CPU》(雷思磊)结构，采用的是wishbone总�
 需要注意的是，图中并没有标注处理中断异常的特权级，mips中是cp0，riscv中是csr，这个阶段一般都放在mem，一般来讲地址都需要进行mmu转换，一个访问ram的地址，需要先经过csr的一些判断，然后送往tlb，tlb出来的地址再送往(或者cache)内存。针对一些异常的情况，csr这个模块会及时地发出清流水线的命令，并进行相关处理。
 
 > riscv的官方手册也是一个很好的帮助，另外国人也有一版电子书(翻译)介绍riscv架构的，在此也一并推荐 http://crva.io/documents/RISC-V-Reader-Chinese-v2p1.pdf
-
 
 ## wishbone总线
 
