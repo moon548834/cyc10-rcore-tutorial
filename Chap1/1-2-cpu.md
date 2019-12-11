@@ -8,8 +8,7 @@ soc则基于《自己动手写CPU》(雷思磊)结构，采用的是wishbone总�
 
 ## 五级流水架构
 
-<div align=center><img src="../picture/pipeline.png" width = "50%" height = "50%" align="center"/></div>
-图片！！
+![](/picture/pipeline.png)
 
 > 图片炸了
 
