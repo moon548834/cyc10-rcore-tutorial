@@ -6,4 +6,6 @@
 	* [1-2CPU及SOC说明]( Chap1/1-2-cpu.md)
 * [第二章指令测试]( Chap2/2-0-test.md)
 * [第三章bbl分析]( Chap3/3-0-bbl.md)
+* [附录](picture)
+
 
