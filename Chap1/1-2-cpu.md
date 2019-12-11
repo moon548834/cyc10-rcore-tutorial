@@ -24,6 +24,7 @@ soc则基于《自己动手写CPU》(雷思磊)结构，采用的是wishbone总�
 
 wishbone总线只考虑单次的读写还是比较简单的，上面的端口比如 `rst`, `clk` 大多可以顾名思义，在此我也不赘述，握手协议简单地说就是 **CYC和STB同时拉高时表示请求开始，在整个过程中，保持高电平，一直等到slave响应ACK拉高后的下一周期，CYC，STB和ACK拉低，至此一个请求结束** 这里给一个简单的时序图(来自《自己动手写CPU》)，不考虑TAG信号，更详细资料请参阅 https://cdn.opencores.org/downloads/wbspec_b4.pdf 
 
+
 ![](/picture/wishbone2.png)
 
 > 请注意上升沿1和上升沿0之间实际可能还有若干个周期，并且ACK拉高的那个周期的上升沿CYC和STB还是高电平
