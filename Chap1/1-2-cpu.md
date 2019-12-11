@@ -10,8 +10,6 @@ soc则基于《自己动手写CPU》(雷思磊)结构，采用的是wishbone总�
 
 ![](/picture/pipeline.png)
 
-> 图片炸了
-
 这只是一个简单的示意图，如果没有相关的基础知识理解起来还是比较困难的，我这里推荐一本书，名字是《计算机组成与设计——硬件软件接口》作者是Patterson和Hennessy，里面有详细的过于MIPS架构的介绍，事实上MIPS和RISCV从架构上讲都属于精简指令集，而且很多结构都比较相似，所以不必拘泥于一定要找riscv的书。另外如果接触源码的话，之前推荐的雷思磊写的是一本不错的书，不过学习过程不能只是抄源码，还是要多去理解才有更大的收获的。
 
 在这里我结合本工程的CPU简单介绍一下一个指令的执行过程，对于一条指令来讲，在硬件执行的过程中被拆分成了5个阶段，这五个阶段在没有异常和暂停的时候是并行进行的。对于一个指令来说首先在IF阶段更新pc值并从指令ROM中取数据，这个时候由于数据可能需要若干周期，流水线就暂停了，等到请求完毕后将去回来的指令送往ID级，ID级的工作顾名思义就是decode的过程，接下来进入的是EXE也就是执行级，这里面一般会进行一些加减乘除移位的运算操作，然后将结果送往mem级，如果有访存的指令，那么就访问数据ram即可，同理，请求ram可能也需要多周期，此时流水线也停下。执行完毕后数据送往WB级，将结果写回寄存器堆。
@@ -22,11 +20,13 @@ soc则基于《自己动手写CPU》(雷思磊)结构，采用的是wishbone总�
 
 ## wishbone总线
 
-<div align=center><img src="../picture/wishbone.png" width = "50%" height = "50%" align="center"/></div>
+![](/picture/wishbone.png)
 
 wishbone总线只考虑单次的读写还是比较简单的，上面的端口比如 `rst`, `clk` 大多可以顾名思义，在此我也不赘述，握手协议简单地说就是 **CYC和STB同时拉高时表示请求开始，在整个过程中，保持高电平，一直等到slave响应ACK拉高后的下一周期，CYC，STB和ACK拉低，至此一个请求结束** 这里给一个简单的时序图(来自《自己动手写CPU》)，不考虑TAG信号，更详细资料请参阅 https://cdn.opencores.org/downloads/wbspec_b4.pdf 
 
-<div align=center><img src="../picture/wishbone2.png" width = "50%" height = "50%" align="center"/></div>
+<div align=center>
+![](/picture/wishbone2.png)
+</div>
 
 > 请注意上升沿1和上升沿0之间实际可能还有若干个周期，并且ACK拉高的那个周期的上升沿CYC和STB还是高电平
 
