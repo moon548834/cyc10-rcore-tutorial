@@ -27,5 +27,5 @@ wishbone总线只考虑单次的读写还是比较简单的，上面的端口比
 
 <div align=center><img src="../picture/wishbone2.png" width = "50%" height = "50%" align="center"/></div>
 
-> 请注意上升沿1和上升沿0之间还有若干个周期，并且ACK拉高的那个周期的上升沿CYC和STB还是高电平
+> 请注意上升沿1和上升沿0之间实际可能还有若干个周期，并且ACK拉高的那个周期的上升沿CYC和STB还是高电平
 
