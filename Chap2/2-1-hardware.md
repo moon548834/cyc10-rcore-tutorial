@@ -18,7 +18,7 @@
 
 示意图如下：
 
-![](/picture/cyc10_fpga(1).png)
+![](/IMG/cyc10_fpga(1).png)
 
 ## 硬件地址空间分配
 
@@ -41,7 +41,7 @@
 
 相关代码位于 `./wishbone_cyc10/rom_wishbone.v`，相关控制比较简单，不赘述，单举一个需要注意的事项，这里我的ROM里面调用了一个已经封装好的IP核，这个IP核的配置为 深度=16384，宽度=32bits，这样算起来一共有64kB，与之前的48KB不符。这是因为IP核深度只能配置为16384/8192(见下图)，即64KB/32KB，没有中间选项，所以只好如此，但并不影响结果，只要你保证真正用到的rom不超过48KB即可。
 
-![](/picture/rom_depth.png)
+![](/IMG/rom_depth.png)
 
 ## 仿真环境的RAM控制器
 
@@ -61,7 +61,7 @@ SDRAM(Synchronous Dynamic Random Access Memory)是同步动态随机访问存储
 
 SDRAM的内部有存储单元整列，给出行地址，列地址，就可以选择相应的存储单元，如下图中右侧部分所示。
 
-![](/picture/sdram_frame.png)
+![](/IMG/sdram_frame.png)
 
 图上左侧的信号，对应于顶层文件的这些接口，有部分信号芯片手册上未标明如dq。 
 
@@ -131,7 +131,7 @@ SDRAM的内部有存储单元整列，给出行地址，列地址，就可以选
 
 关于模式寄存器的结构如下，或者查阅芯片手册：
 
-![](/picture/sdram_config_mode_reg.png)
+![](/IMG/sdram_config_mode_reg.png)
 
 模式寄存器配置为 `13'b0_0000_0011_0001`，表示CAS延时为3个时钟周期，突发长度为2(一次16bits，两次正好32bits)，突发模式是线性。
 
@@ -139,7 +139,7 @@ SDRAM的内部有存储单元整列，给出行地址，列地址，就可以选
 
 > 手册中给出的-5 -6 -7代表了不同频率的设置值，最低的也是133MHz，事实上我在下板的时候用133MHz也会报WNS违约，后来发现**降低SDRAM主频**也是可以工作的。
 
-![](/picture/sdram_config_time.png)
+![](/IMG/sdram_config_time.png)
 
 > 参考《自己动手写CPU》cfg_sdr_cas要比模式寄存器中的值大一，故是3'b100。
 
@@ -173,5 +173,5 @@ uart帧格式比较简单，在本工程下，停止位1位，无校验位，波
 
 在下板的时候，可以用putty等软件进行串口回显。
 
-![](/picture/putty.png)
+![](/IMG/putty.png)
 

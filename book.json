@@ -1,0 +1,18 @@
+{
+  "plugins": [
+    "chapter-fold",
+    "code",
+    "search-pro",
+    "github",
+    "ancre-navigation",
+    "-sharing"
+  ],
+  "pluginsConfig": {
+    "github": {
+      "url": "https://github.com/moon548834/cyc10-rcore-tutorial"
+    }
+  },
+  "styles": {
+    "website": "gitbook/website.css"
+  }
+}
