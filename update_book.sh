@@ -4,9 +4,9 @@ mv _book docs
 cd docs
 rm update_book.sh
 rm .gitignore
-git add .
+sudo git add .
 git commit -m "update web"
 cd ..
-git add .
+sudo git add .
 git commit -m "update doc"
 git push
