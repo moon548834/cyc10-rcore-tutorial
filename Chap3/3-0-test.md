@@ -16,12 +16,12 @@
 
 仿真效果图如下：
 
-![](/IMG/RV32UI_sim.png)
+![](/IMG/rv32ui_sim.png)
 
 
 下板效果图如下：
 
-![](/IMG/RV32UI_board.png)
+![](/IMG/rv32ui_board.png)
 
 ## rv32ua指令
 
@@ -83,9 +83,9 @@ rv32ua指令的测试方法与rv32ui类似，执行`make TARGET=rv32ua`即可 �
 
 仿真效果图如下：
 
-![](/IMG/RV32UA_sim.png)
+![](/IMG/rv32ua_sim.png)
 
 
 下板效果图如下：
 
-![](/IMG/RV32UA_board.png)
+![](/IMG/rv32ua_board.png)
