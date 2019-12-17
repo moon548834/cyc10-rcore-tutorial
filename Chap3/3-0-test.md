@@ -8,20 +8,22 @@
 
 ## rv32ui指令
 
-对于普通的用户级指令，我们是可以借鉴在picrov32中用到的方法，将所有的test_case一个一个测试。rv32ui测例位于 `/test/rv32ui` 下，直接make(默认的TARGET是rv32ui 或执行 `make TARGET=rv32ui`)即可生成相应的hex文件(并已经复制到quartus工程)，如果需要修改，需要注意的是以下几个位置：
+对于普通的用户级指令，我们是可以借鉴在picrov32中用到的方法，将所有的test_case一个一个测试。rv32ui测例位于 `./test/rv32ui` 下，直接make(默认的TARGET是rv32ui 或执行 `make TARGET=rv32ui` )即可生成相应的hex文件(并已经复制到quartus工程)，如果需要修改，需要注意的是以下几个位置：
 
-- /test/firmware/sections.ld   串口地址，ROM，RAM地址及大小
-- /test/firmware/start.S       可以通过注释修改进行的测例(此时需要删除 `/test/test`中的对应文件)
-- /test/test/riscv_test.h      串口地址，即代码中0x02000000的部分 
+- ./test/firmware/sections.ld   串口地址，ROM，RAM地址及大小
+- ./test/firmware/start.S       可以通过注释修改进行的测例(此时需要删除 `/test/test`中的对应文件)
+- ./test/rv32ui/riscv_test.h      串口地址，即代码中0x02000000的部分 
 
-仿真效果图如下：
+## rv32si指令与rv32mi指令
 
-![](/IMG/rv32ui_sim.png)
+支持M和S态特权级架构的原始测例位于 `./riscv-test/isa/` ，由于每个指令的异常处理，状态并不相同，而且指令总共也不多，故我这里就没有将他们整合到一起，我目前的方法是将这些生成的指令拷贝到 `./test/rvmsi/` 中，然后回到test目录下，执行 `make TARGET=rv32mi-p-xxx` 。
 
+>对于rv32si与rv32mi指令拷贝过来的就是elf格式的文件
 
-下板效果图如下：
+所以这里完全是用的官方的文件，不过也进行了适当修改，如需修改则需要注意以下几个位置，原因同上。
 
-![](/IMG/rv32ui_board.png)
+- ./riscv-test/env/p/link.ld  
+- ./riscv-test/env/p/riscv_test.h
 
 ## rv32ua指令
 
@@ -79,13 +81,4 @@ fail:
 
 ### rv32ua指令测试
 
-rv32ua指令的测试方法与rv32ui类似，执行`make TARGET=rv32ua`即可 ，最终结果如下：
-
-仿真效果图如下：
-
-![](/IMG/rv32ua_sim.png)
-
-
-下板效果图如下：
-
-![](/IMG/rv32ua_board.png)
+rv32ua指令的测试方法与rv32ui类似，执行 `make TARGET=rv32ua` 即可

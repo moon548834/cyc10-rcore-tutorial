@@ -7,6 +7,6 @@
 	* [2-1SOC与各模块控制器]( Chap2/2-1-hardware.md)
 * [第三章指令测试]( Chap3/3-0-test.md)
 * [第四章bbl分析]( Chap4/4-0-bbl.md)
-* [附录](picture)
+* [附录](Chap6/6-0-result.md)
 
 
