@@ -16,12 +16,19 @@
 
 ### wishbone总线
 
-![](/IMG/wishbone.png)
+<div align=center> 
+
+![](/IMG/wishbone.png) 
+
+</div>
 
 wishbone总线只考虑单次的读写还是比较简单的，上面的端口比如 `rst`, `clk` 大多可以顾名思义，在此我也不赘述，握手协议简单地说就是 **CYC和STB同时拉高时表示请求开始，在整个过程中，保持高电平，一直等到slave响应ACK拉高后的下一周期，CYC，STB和ACK拉低，至此一个请求结束** 这里给一个简单的时序图(来自《自己动手写CPU》)，不考虑TAG信号，更详细资料请参阅 https://cdn.opencores.org/downloads/wbspec_b4.pdf 
 
+<div align=center> 
 
 ![](/IMG/wishbone2.png)
+
+</div>
 
 > 请注意上升沿1和上升沿0之间实际可能还有若干个周期，并且ACK拉高的那个周期的上升沿CYC和STB还是高电平
 
@@ -47,6 +54,8 @@ wishbone总线只考虑单次的读写还是比较简单的，上面的端口比
 
 ![](/IMG/soc.png)
 
+CONFIG模块对应于 `verilog` 中 `config_string` 模块，这个模块存在的目的是为了兼容BBL，其中保存了一些硬件信息供BBL查询设置，另外根据BBL要求，timer与cmp的地址也是通过内存地址访问的，这里也一并归于此模块中。当timer达到cmp的数值时会触发一个定时器中断，直接送往CPU。
+
 ## 硬件地址空间分配
 
 基于以上资源，我将**测试环境**下的CPU地址分配如下：
@@ -56,7 +65,8 @@ wishbone总线只考虑单次的读写还是比较简单的，上面的端口比
 | ROM     | 0x0001_0000~0x0001_c000  | 48KB  |
 | SDRAM   | 0x0010_0000~0x0050_0000  | 4MB   |
 | 串口    | 0x0200_0000~0x0200_0020  | 32B   |
-| LED     | 0x0300_0000~0x0300_0010  | 16B   |
+| LED     | 0x3000_0000~0x0300_0010  | 16B   |
+| CONFIG  | 0x0000_1000~0x0000_0100<br /> 0x4000_0000~0x4000_0010<br /> 0x4000_0000~0x4000_0004  | 256B<br /> 16B<br />  4B|
 
 该部分可以在 `./wishbone_cyc10/phy_bus_addr_conv.v`中找到对应的verilog语句及宏定义，只需修改其中的数值即可。举个例子，如想修改RAM的地址分配，只需要修改以下两个宏即可，其余不需更改。
 
@@ -189,6 +199,22 @@ cfg_req_depth尚不清楚有何影响，采取和《自己动手写CPU》相同�
     .cfg_sdr_width(2'b01),
     .cfg_colbits(2'b00)
 ```
+
+## CONFIG控制器
+
+正如前面所提到的，这里的CONFIG是为了与BBL兼容，里面包含了
+- 硬件信息
+- timer中断
+
+其中硬件信息通过如下方式嵌入到fpga中，这里的config_string_rom通过 `./wishbone_cyc10/config_string_rom` 生成，已写好相关makeifle(感谢lkx等人的工作)，通过脚本把生成的指令转换成verilog语句。实际上当上电的时刻，cpu执行的第一条指令是 `config_string_rom` 里面的一条跳转指令，跳转到ROM地址即0x0001_0000，和x86的FFFF_0000的跳转有异曲同工之妙。
+
+```verilog
+	wire[`WishboneDataBus]  mem[0:`DataMemNum-1];
+	`include"config_string_rom/config_string_rom"
+```
+
+定时器中断实际上会有两个寄存器，一个是当前的cycle保存寄存器，这里面是 `mtime`，另一个是阈值寄存器，超过这个阈值就会触发一个中断，这里面叫 `mtimecmp` ，该模块包含了这两个寄存器的读写功能，以及触发timer中断的相关设置。
+
 
 ## uart控制器
 
