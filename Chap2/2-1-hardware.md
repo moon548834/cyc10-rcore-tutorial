@@ -91,12 +91,12 @@ SDRAM的内部有存储单元整列，给出行地址，列地址，就可以选
 图上左侧的信号，对应于顶层文件的这些接口，有部分信号芯片手册上未标明如dq。 
 
 ```verilog
-   output wire 	    	sdr_clk_o,
-   output wire 		    sdr_cs_n_o,
-   output wire		  	sdr_cke_o,
-   output wire 		    sdr_ras_n_o,
-   output wire 		    sdr_cas_n_o,
-   output wire 		    sdr_we_n_o,
+   output wire          sdr_clk_o,
+   output wire          sdr_cs_n_o,
+   output wire          sdr_cke_o,
+   output wire          sdr_ras_n_o,
+   output wire          sdr_cas_n_o,
+   output wire          sdr_we_n_o,
    output wire [1:0]    sdr_dqm_o,
    output wire [1:0]    sdr_ba_o,
    output wire [11:0]   sdr_addr_o,
