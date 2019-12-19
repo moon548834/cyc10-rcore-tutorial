@@ -5,12 +5,16 @@
     "search-pro",
     "github",
     "ancre-navigation",
+	"localized-footer",
     "-sharing"
   ],
   "pluginsConfig": {
     "github": {
-      "url": "https://github.com/moon548834/cyc10-rcore-tutorial"
-    }
+        "url": "https://github.com/moon548834/cyc10-rcore-tutorial"
+    },
+	"localized-footer": {
+		"filename": "gitbook/comment.html"
+	}
   },
   "styles": {
     "website": "gitbook/website.css"
