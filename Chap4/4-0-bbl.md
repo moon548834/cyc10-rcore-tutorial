@@ -179,7 +179,10 @@ first_free_paddr = sbi_top_paddr() + num_harts * RISCV_PGSIZE;
 
 进行完以上的初始化任务后，进入到boot_loader函数中，首先打印loading OS的字符串，接下来进入load_kernel_elf这个函数加载elf格式的OS，然后是S态支持虚拟内存的一些初始化过程，接下来打印logo，刷tlb，最终进入到S态的OS中，至此所有的bootloader工作全部结束，控制权交给OS kernel。
 
-代码位于 ./bbl/bbl.c ./bbl/kernel_elf.c
+代码位于 .
+- ./bbl/bbl.c 
+- ./bbl/kernel_elf.c
+- ./bbl/elf.h
 
 ```c
 log("machine mode: loading payload OS...");
@@ -190,4 +193,36 @@ print_logo();
 mb();                                                                                                                                     
 elf_loaded = 1;
 enter_supervisor_mode((void *)info.entry, 0);
+```
+
+**load_kernel_elf**: 加载os
+
+这里简单介绍elf文件，不是重点，在 `./bbl/elf.h` 文件中，elf文件格式定义如下：
+
+```c
+typedef struct {
+  uint8_t  e_ident[16];
+  uint16_t e_type;
+  uint16_t e_machine;
+  uint32_t e_version;
+  uint32_t e_entry;
+  uint32_t e_phoff;
+  uint32_t e_shoff;
+  uint32_t e_flags;
+  uint16_t e_ehsize;
+  uint16_t e_phentsize;
+  uint16_t e_phnum;
+  uint16_t e_shentsize;
+  uint16_t e_shnum;
+  uint16_t e_shstrndx;
+} Elf32_Ehdr;
+```
+
+e_ident
+
+```c
+  if (sizeof(*eh) > size ||
+      !(eh->e_ident[0] == '\177' && eh->e_ident[1] == 'E' &&
+        eh->e_ident[2] == 'L'    && eh->e_ident[3] == 'F'))
+    goto fail;
 ```
