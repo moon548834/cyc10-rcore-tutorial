@@ -416,7 +416,12 @@ first_free_paddr = sbi_top_paddr() + num_harts * RISCV_PGSIZE;
 </code></pre>
 <h2 id="step3-bootloader"><a name="step3-bootloader" class="anchor-navigation-ex-anchor" href="#step3-bootloader"><i class="fa fa-link" aria-hidden="true"></i></a>step3 boot_loader</h2>
 <p>&#x8FDB;&#x884C;&#x5B8C;&#x4EE5;&#x4E0A;&#x7684;&#x521D;&#x59CB;&#x5316;&#x4EFB;&#x52A1;&#x540E;&#xFF0C;&#x8FDB;&#x5165;&#x5230;boot_loader&#x51FD;&#x6570;&#x4E2D;&#xFF0C;&#x9996;&#x5148;&#x6253;&#x5370;loading OS&#x7684;&#x5B57;&#x7B26;&#x4E32;&#xFF0C;&#x63A5;&#x4E0B;&#x6765;&#x8FDB;&#x5165;load_kernel_elf&#x8FD9;&#x4E2A;&#x51FD;&#x6570;&#x52A0;&#x8F7D;elf&#x683C;&#x5F0F;&#x7684;OS&#xFF0C;&#x7136;&#x540E;&#x662F;S&#x6001;&#x652F;&#x6301;&#x865A;&#x62DF;&#x5185;&#x5B58;&#x7684;&#x4E00;&#x4E9B;&#x521D;&#x59CB;&#x5316;&#x8FC7;&#x7A0B;&#xFF0C;&#x63A5;&#x4E0B;&#x6765;&#x6253;&#x5370;logo&#xFF0C;&#x5237;tlb&#xFF0C;&#x6700;&#x7EC8;&#x8FDB;&#x5165;&#x5230;S&#x6001;&#x7684;OS&#x4E2D;&#xFF0C;&#x81F3;&#x6B64;&#x6240;&#x6709;&#x7684;bootloader&#x5DE5;&#x4F5C;&#x5168;&#x90E8;&#x7ED3;&#x675F;&#xFF0C;&#x63A7;&#x5236;&#x6743;&#x4EA4;&#x7ED9;OS kernel&#x3002;</p>
-<p>&#x4EE3;&#x7801;&#x4F4D;&#x4E8E; ./bbl/bbl.c ./bbl/kernel_elf.c</p>
+<p>&#x4EE3;&#x7801;&#x4F4D;&#x4E8E; .</p>
+<ul>
+<li>./bbl/bbl.c </li>
+<li>./bbl/kernel_elf.c</li>
+<li>./bbl/elf.h</li>
+</ul>
 <pre><code class="lang-c"><span class="hljs-built_in">log</span>(<span class="hljs-string">&quot;machine mode: loading payload OS...&quot;</span>);
 <span class="hljs-keyword">extern</span> <span class="hljs-keyword">char</span> _payload_start, _payload_end;
 load_kernel_elf(&amp;_payload_start, &amp;_payload_end - &amp;_payload_start, &amp;info);
@@ -425,6 +430,31 @@ print_logo();
 mb();                                                                                                                                     
 elf_loaded = <span class="hljs-number">1</span>;
 enter_supervisor_mode((<span class="hljs-keyword">void</span> *)info.entry, <span class="hljs-number">0</span>);
+</code></pre>
+<p><strong>load_kernel_elf</strong>: &#x52A0;&#x8F7D;os</p>
+<p>&#x8FD9;&#x91CC;&#x7B80;&#x5355;&#x4ECB;&#x7ECD;elf&#x6587;&#x4EF6;&#xFF0C;&#x4E0D;&#x662F;&#x91CD;&#x70B9;&#xFF0C;&#x5728; <code>./bbl/elf.h</code> &#x6587;&#x4EF6;&#x4E2D;&#xFF0C;elf&#x6587;&#x4EF6;&#x683C;&#x5F0F;&#x5B9A;&#x4E49;&#x5982;&#x4E0B;&#xFF1A;</p>
+<pre><code class="lang-c"><span class="hljs-keyword">typedef</span> <span class="hljs-keyword">struct</span> {
+  <span class="hljs-keyword">uint8_t</span>  e_ident[<span class="hljs-number">16</span>];
+  <span class="hljs-keyword">uint16_t</span> e_type;
+  <span class="hljs-keyword">uint16_t</span> e_machine;
+  <span class="hljs-keyword">uint32_t</span> e_version;
+  <span class="hljs-keyword">uint32_t</span> e_entry;
+  <span class="hljs-keyword">uint32_t</span> e_phoff;
+  <span class="hljs-keyword">uint32_t</span> e_shoff;
+  <span class="hljs-keyword">uint32_t</span> e_flags;
+  <span class="hljs-keyword">uint16_t</span> e_ehsize;
+  <span class="hljs-keyword">uint16_t</span> e_phentsize;
+  <span class="hljs-keyword">uint16_t</span> e_phnum;
+  <span class="hljs-keyword">uint16_t</span> e_shentsize;
+  <span class="hljs-keyword">uint16_t</span> e_shnum;
+  <span class="hljs-keyword">uint16_t</span> e_shstrndx;
+} Elf32_Ehdr;
+</code></pre>
+<p>e_ident</p>
+<pre><code class="lang-c">  if (sizeof(*eh) &gt; size ||
+      !(eh-&gt;e_ident[0] == &apos;\177&apos; &amp;&amp; eh-&gt;e_ident[1] == &apos;E&apos; &amp;&amp;
+        eh-&gt;e_ident[2] == &apos;L&apos;    &amp;&amp; eh-&gt;e_ident[3] == &apos;F&apos;))
+    goto fail;
 </code></pre>
 <p><div id="page-footer" class="localized-footer"><hr><p><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css"></p>
 <script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
@@ -518,7 +548,7 @@ enter_supervisor_mode((<span class="hljs-keyword">void</span> *)info.entry, <spa
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"第四章bbl分析","level":"1.5","depth":1,"next":{"title":"附录","level":"1.6","depth":1,"path":"Chap6/6-0-result.md","ref":"Chap6/6-0-result.md","articles":[]},"previous":{"title":"第三章指令测试","level":"1.4","depth":1,"path":"Chap3/3-0-test.md","ref":"Chap3/3-0-test.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":["chapter-fold","code","search-pro","github","ancre-navigation","localized-footer","-sharing"],"pluginsConfig":{"chapter-fold":{},"github":{"url":"https://github.com/moon548834/cyc10-rcore-tutorial"},"search-pro":{},"search":{},"localized-footer":{"filename":"gitbook/comment.html","hline":"true"},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"code":{"copyButtons":true},"fontsettings":{"theme":"white","family":"sans","size":2},"highlight":{},"ancre-navigation":{"associatedWithSummary":true,"float":{"level1Icon":"","level2Icon":"","level3Icon":"","showLevelIcon":false},"mode":"float","multipleH1":true,"pageTop":{"level1Icon":"","level2Icon":"","level3Icon":"","showLevelIcon":false},"printLog":false,"showLevel":true},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"gitbook/website.css"}},"file":{"path":"Chap4/4-0-bbl.md","mtime":"2019-12-16T09:54:28.306Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2019-12-19T11:43:27.010Z"},"basePath":"..","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"第四章bbl分析","level":"1.5","depth":1,"next":{"title":"附录","level":"1.6","depth":1,"path":"Chap6/6-0-result.md","ref":"Chap6/6-0-result.md","articles":[]},"previous":{"title":"第三章指令测试","level":"1.4","depth":1,"path":"Chap3/3-0-test.md","ref":"Chap3/3-0-test.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":["chapter-fold","code","search-pro","github","ancre-navigation","localized-footer","-sharing"],"pluginsConfig":{"chapter-fold":{},"github":{"url":"https://github.com/moon548834/cyc10-rcore-tutorial"},"search-pro":{},"search":{},"localized-footer":{"filename":"gitbook/comment.html","hline":"true"},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"code":{"copyButtons":true},"fontsettings":{"theme":"white","family":"sans","size":2},"highlight":{},"ancre-navigation":{"associatedWithSummary":true,"float":{"level1Icon":"","level2Icon":"","level3Icon":"","showLevelIcon":false},"mode":"float","multipleH1":true,"pageTop":{"level1Icon":"","level2Icon":"","level3Icon":"","showLevelIcon":false},"printLog":false,"showLevel":true},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"gitbook/website.css"}},"file":{"path":"Chap4/4-0-bbl.md","mtime":"2019-12-26T01:03:32.199Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2019-12-26T03:57:33.819Z"},"basePath":"..","book":{"language":""}});
         });
     </script>
 </div>
