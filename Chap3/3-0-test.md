@@ -82,3 +82,104 @@ fail:
 ### rv32ua指令测试
 
 rv32ua指令的测试方法与rv32ui类似，执行 `make TARGET=rv32ua` 即可
+
+## 测例详解
+
+由于测例都是通过宏来封装的，所以就有必要搞清楚这些宏的工作原理以便排查问题和增添测例。下面以 `addi.S` 为例进行一些说明
+
+```C
+#include "riscv_test.h"
+#include "test_macros.h"
+
+RVTEST_RV32U
+RVTEST_CODE_BEGIN
+```
+
+打开 `addi.S` 文件后，看到在真正的测例宏前有如下几行，其中 `riscv_test` 包含了一些测试初始化，打印`PAST`，`FAIL`的宏，而 `test_macros.h` 则包含了不同指令测试的宏。，具体之后还会有例子。
+
+下面 `RVTEST_RV32U` 代表这是32位的测例，因为 `riscv-test` 只有在64位下才有真正的源代码，32位只是借用了64位的测例，并通过宏的形式进行少量修改，因为要测试的是32位指令集，所以要有这个。
+
+`RVTEST_CODE_BEGIN` 是来自于 `riscv_test.h` 
+
+```C
+#define RVTEST_CODE_BEGIN       \ 
+    .text;              \
+    .global TEST_FUNC_NAME;     \
+    .global TEST_FUNC_RET;      \
+TEST_FUNC_NAME:             \
+    li  a0, 0x00ff;     \
+.delay_pr:              \
+    addi    a0,a0,-1;       \
+    bne a0,zero,.delay_pr;  \
+    lui a0,%hi(.test_name); \
+    addi    a0,a0,%lo(.test_name);  \
+    lui a2,0x02000000>>12;  \
+.prname_next:               \
+    lb  a1,0(a0);       \
+    beq a1,zero,.prname_done;   \
+    sw  a1,0(a2);       \
+    addi    a0,a0,1;        \
+    jal zero,.prname_next;  \
+.test_name:             \
+    .ascii TEST_FUNC_TXT;       \
+    .byte 0x00;         \
+    .balign 4, 0;           \
+.prname_done:               \
+    addi    a1,zero,'.';        \
+    sw  a1,0(a2);       \
+    sw  a1,0(a2);
+```
+
+`.delay_pr`是一个延时，原先可能是0xffff或者一个更大的数，但是在仿真下回消耗很大不必要的时间，这里我给调小了点，这部分是打印功能测试的名字，对于本例是`addi..`，之后就进入了真正的测例
+
+```
+  #-------------------------------------------------------------
+  # Arithmetic tests
+  #-------------------------------------------------------------
+
+  TEST_IMM_OP( 2,  addi, 0x00000000, 0x00000000, 0x000 );
+  TEST_IMM_OP( 3,  addi, 0x00000002, 0x00000001, 0x001 );
+  TEST_IMM_OP( 4,  addi, 0x0000000a, 0x00000003, 0x007 );
+```
+
+`TEST_RP_OP` 是一个宏，这个宏的定义如下
+
+```c
+#define TEST_IMM_OP( testnum, inst, result, val1, imm ) \
+    TEST_CASE( testnum, x3, result, \
+      li  x1, val1; \
+      inst x3, x1, SEXT_IMM(imm); \
+    )
+```
+
+
+宏的声明不难理解，内容则是调用另一个宏TEST_CASE，其中SEXT_IMM(imm)是
+
+```c
+#define SEXT_IMM(x) ((x) | (-(((x) >> 11) & 1) << 11))
+```
+
+而TEST_CASE定义如下：
+
+```c
+#define TEST_CASE( testnum, testreg, correctval, code... ) \
+test_ ## testnum: \
+    code; \
+    li  x29, correctval; \
+    li  TESTNUM, testnum; \
+    bne testreg, x29, fail;
+```
+
+追踪到TEST_CASE 一上来是一个声明第一个test，`test_ ## testnum` 将会被展开成 `test_1 test_2` 的形式, 之后code则是通过TEST_IMM_OP传进来的，这里是一个可变参量，所以可以有多条语句。之后将比对运算结果是否是正确的即 `testreg` 的数值是否和 `correctval` 相等，如果不相等就跳转到失败，打印"FAIL"然后返回。
+
+将宏`TEST_IMM_OP`对于本例进行展开就是
+
+```
+li x1, 0x00000000,
+addi x3, x1, SEXT_IMM(0)
+li x29, 0
+li TESTNUM, 2
+bne x3, x29, fail
+```
+
+即验证`0 + 0 ?= 0` 
