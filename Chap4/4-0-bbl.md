@@ -218,11 +218,31 @@ typedef struct {
 } Elf32_Ehdr;
 ```
 
-e_ident
+一开始的几个结构从`e_ident`到`e_version`都是存储的关于文件格式信息，在`load_kernel_elf`这个函数开始进行了相关检查，包含头格式，物理地址大小等。由于最终采取的是4KB映射，所以此时修改了第一个空闲物理地址的起始位置时页对齐，而不是巨页对齐。
 
 ```c
-  if (sizeof(*eh) > size ||
-      !(eh->e_ident[0] == '\177' && eh->e_ident[1] == 'E' &&
-        eh->e_ident[2] == 'L'    && eh->e_ident[3] == 'F'))
-    goto fail;
+first_free_paddr = ROUNDUP(first_free_paddr, RISCV_PGSIZE);
 ```
+之后函数通过检测所有的加载段，来获取最小的虚拟地址。然后进行段的复制(从物理地址到虚拟地址的位置，实际上应该是从物理地址A到虚拟地址所映射的物理地址B的复制，**不过此时还没映射，但可以看作是上面那句话**)，这样设置完页表就可以进入到`e_entry`执行程序了。所以执行程序之前还需要进行一些M态的设置，
+
+**superviosr_vm_init**:页表设置
+这也就是`supervisor_vm_init`函数的工作，最关键的是设置页表的映射，另外需要注意的是最后需要把sbi映射到虚地址的最顶端部分。在看源码结合lxs工作的同时，我注意到
+
+```c
+for (size_t i = 0; i < num_middle_pts - 1; i++)
+    root_pt[(1<<RISCV_PGLEVEL_BITS)-num_middle_pts+i] = ptd_create(((uintptr_t)middle_pt >> RISCV_PGSHIFT) + i);
+```
+
+这部分的 `num_middle_pts - 1` 就是把最后的位置空给sbi(我的理解是这样)。另外在仿真环境下，由于速度不是很快，所以如果os的虚拟地址从0xc0004000开始的话，因为如下语句：
+
+```c
+size_t num_middle_pts = (-info.first_user_vaddr - 1) / MEGAPAGE_SIZE + 1;
+pte_t* root_pt = (void*)middle_pt + num_middle_pts * RISCV_PGSIZE;
+memset(middle_pt, 0, (num_middle_pts + 1) * RISCV_PGSIZE);
+```
+
+会导致初始化非常大的空间，但其实没有必要，因为os用不到那么多，所以我这里把os的虚起始地址设置为0xfc40_0000，目的是减小`num_middle_pts`，加快仿真。
+
+> 这部分都是一些页表的操作，还是建议理解清楚
+
+在函数最后刷新`sptbr`也就是`satp`,之后便进入到S态的os中了。
