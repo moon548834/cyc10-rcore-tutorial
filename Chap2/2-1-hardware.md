@@ -214,7 +214,7 @@ cfg_req_depth尚不清楚有何影响，采取和《自己动手写CPU》相同�
 
 <div align=center> 
 
-![](/IMG/qsys_sdram.PNG)
+![](/IMG/qsys_sdram.png)
 
 </div>
 
