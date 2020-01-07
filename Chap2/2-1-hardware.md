@@ -92,6 +92,8 @@ reg [`WishboneDataBus] mem[0:`DataMemNum-1];
 
 ### SDRAM结构
 
+**然而实际上文中这中配置并不能跑起整个SDRAM，虽然也确实可以通过rv32ui的官方测例**
+
 SDRAM(Synchronous Dynamic Random Access Memory)是同步动态随机访问存储器，同步是指memory工作需要同步时钟，内部命令的发送与数据的传输都以它为基准；动态是指存储阵列需要不断地刷新以保证数据不丢失；随机访问是指数据不是线性依次读写，而是可以自由指定地址进行读/写。
 
 SDRAM的内部有存储单元整列，给出行地址，列地址，就可以选择相应的存储单元，如下图中右侧部分所示。
@@ -199,6 +201,110 @@ cfg_req_depth尚不清楚有何影响，采取和《自己动手写CPU》相同�
     .cfg_sdr_width(2'b01),
     .cfg_colbits(2'b00)
 ```
+
+### SDRAM问题
+
+我在使用SDRAM的时候使用了两种方法，但最后都以失败告终，在此记录，如果可能可以帮助到后来者。
+
+方法一、 使用qsys中的sdram
+
+这种方法参考了lxs中的实现，在它的soc中，全部环境都采用的是200MHz的频率，并且通过quartus的qsys直接搭建，简便明了。使用qsys的SDRAMIP核从他的实验中验证是可以行的通的，那么**理论**在我这里加一个总线转换桥也是可以跑的。
+
+为什么直接在IP Catalog中搜不到sdram的ip核，我猜测还是由于总线的原因，但至少通过我接下来说的这种方式是可以间接用它的IP核的
+
+<div align=center> 
+
+![](/IMG/qsys_sdram.PNG)
+
+</div>
+
+打开qsys界面后，只需假如SDRAM的IP核即可，然后将avalon接口和物理的sdram的接口引出，图中对应信号`avalon_sdram`和`sdram`,双击一下就可以修改名称，这里必须引出，因为需要和我们的wishbone总线交互。
+
+<div align=center> 
+
+![](/IMG/qsys_sdram_parameter.PNG)
+
+</div>
+
+参数如表，另外需要注意的是左侧信号，`sdram`对应的信号为`zs_xxx`，这里和实际的物理sdram接口对应没有问题，而对应的`avalon`总线，注意地址是[21:0]，数据是[15:0]，那么也就是说这里面总线的最小寻址单元是1个16bits的半字，所以我们这个转换桥，还需要做一个32位到16位的工作，实际上这个avalon是32位的更方便，因为这样就不要我们转换桥做额外的工作了，但是当我设定16位宽的时候，sdram和总线接口都被固定为16位，不能修改。设定完这些后保存，在`.bb`中找到所有接口信号明确的位宽
+
+```verilog
+module sdram (
+	avalon_sdram_address,
+	avalon_sdram_byteenable_n,
+	avalon_sdram_chipselect,
+	avalon_sdram_writedata,
+	avalon_sdram_read_n,
+	avalon_sdram_write_n,
+	avalon_sdram_readdata,
+	avalon_sdram_readdatavalid,
+	avalon_sdram_waitrequest,
+	clk_clk,
+	reset_reset_n,
+	sdram_addr,
+	sdram_ba,
+	sdram_cas_n,
+	sdram_cke,
+	sdram_cs_n,
+	sdram_dq,
+	sdram_dqm,
+	sdram_ras_n,
+	sdram_we_n);	
+
+	input	[21:0]	avalon_sdram_address;
+	input	[1:0]	avalon_sdram_byteenable_n;
+	input		avalon_sdram_chipselect;
+	input	[15:0]	avalon_sdram_writedata;
+	input		avalon_sdram_read_n;
+	input		avalon_sdram_write_n;
+	output	[15:0]	avalon_sdram_readdata;
+	output		avalon_sdram_readdatavalid;
+	output		avalon_sdram_waitrequest;
+	input		clk_clk;
+	input		reset_reset_n;
+	output	[11:0]	sdram_addr;
+	output	[1:0]	sdram_ba;
+	output		sdram_cas_n;
+	output		sdram_cke;
+	output		sdram_cs_n;
+	inout	[15:0]	sdram_dq;
+	output	[1:0]	sdram_dqm;
+	output		sdram_ras_n;
+	output		sdram_we_n;
+endmodule
+```
+
+有了这部分之后，下面开始总线转换桥的编写，参见`wb32_avalon16`代码，这里不具体分析，因为我也不确定是否完全正确，大致的思路是构建一个状态机，当`wishbone`总线上有请求时，也就是`cyc`和`stb`都为1，那么就开始进行转换工作，在开始之前，我有一个等待cnt的操作，出于担心时序的影响，因为`setup time`小于0，所以又等待了十几个sdram频率的周期。这里SDRAM主频150MHz,总线20MHz。
+
+如果发现仍然有`cyc`和`stb`都为1，根据总线中we使能情况看是写请求还是读请求，对于读请求和写请求来说，都是通过先低16位后高16位的操作，对于`avalon`总线来说，对于写请求等待`waitrequest`拉低就可以，而读请求需要等`readdatavalid`拉高才可以。事实上应该有更快的响应方式，但此处我这里采用这种基本的握手规则。
+
+需要注意的是`avalon`总线中关于`read`,`write`,和`byteenable`都是低有效的，准确的说应该是对于qsys中这个sdram是这样规定(低有效)的，所以处理的时候需要多加小心。
+
+然后在顶层例化，并在pll中添加相关时钟即可，另外这里需要注意一点**时钟的相位**，lxs的工作里面sdram给出来了两个时钟，1个角度为0，一个角度为-68，这里配置的原因请参考IP核手册，我在查阅资料的时候发现确实需要相位不同，需要调整，这里直接采用lxs中的数值。
+
+最终综合出来的soc结构如下所示：(这里我把MMU关了)
+
+<div align=center> 
+
+![](/IMG/sdram_qsys_soc.PNG)
+
+</div>
+
+此时综合出来仍有不满足`setuptime`的路径，但都是sdram内部的信号：
+
+<div align=center> 
+
+![](/IMG/sdram_qsys_setup_time.PNG)
+
+</div>
+
+此时下板出现的情况是读出来的是一些奇怪的数字，而且不时发生变化
+
+<div align=center> 
+
+![](/IMG/sdram_qsys_serial.PNG)
+
+</div>
 
 ## CONFIG控制器
 
