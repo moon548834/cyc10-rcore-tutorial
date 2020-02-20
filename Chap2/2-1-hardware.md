@@ -16,19 +16,11 @@
 
 ### wishbone总线
 
-<div align=center>  
-
 ![](/IMG/wishbone.png) 
-
-</div>
 
 wishbone总线只考虑单次的读写还是比较简单的，上面的端口比如 `rst`, `clk` 大多可以顾名思义，在此我也不赘述，握手协议简单地说就是 **CYC和STB同时拉高时表示请求开始，在整个过程中，保持高电平，一直等到slave响应ACK拉高后的下一周期，CYC，STB和ACK拉低，至此一个请求结束** 这里给一个简单的时序图(来自《自己动手写CPU》)，不考虑TAG信号，更详细资料请参阅 https://cdn.opencores.org/downloads/wbspec_b4.pdf 
 
-<div align=center> 
-
 ![](/IMG/wishbone2.png)
-
-</div>
 
 > 请注意上升沿1和上升沿0之间实际可能还有若干个周期，并且ACK拉高的那个周期的上升沿CYC和STB还是高电平
 
@@ -212,19 +204,11 @@ cfg_req_depth尚不清楚有何影响，采取和《自己动手写CPU》相同�
 
 为什么直接在IP Catalog中搜不到sdram的ip核，我猜测还是由于总线的原因，但至少通过我接下来说的这种方式是可以间接用它的IP核的
 
-<div align=center> 
-
 ![](/IMG/qsys_sdram.png)
-
-</div>
 
 打开qsys界面后，只需假如SDRAM的IP核即可，然后将avalon接口和物理的sdram的接口引出，图中对应信号`avalon_sdram`和`sdram`,双击一下就可以修改名称，这里必须引出，因为需要和我们的wishbone总线交互。
 
-<div align=center> 
-
 ![](/IMG/qsys_sdram_parameter.PNG)
-
-</div>
 
 参数如表，另外需要注意的是左侧信号，`sdram`对应的信号为`zs_xxx`，这里和实际的物理sdram接口对应没有问题，而对应的`avalon`总线，注意地址是[21:0]，数据是[15:0]，那么也就是说这里面总线的最小寻址单元是1个16bits的半字，所以我们这个转换桥，还需要做一个32位到16位的工作，实际上这个avalon是32位的更方便，因为这样就不要我们转换桥做额外的工作了，但是当我设定16位宽的时候，sdram和总线接口都被固定为16位，不能修改。设定完这些后保存，在`.bb`中找到所有接口信号明确的位宽
 
@@ -284,27 +268,15 @@ endmodule
 
 最终综合出来的soc结构如下所示：(这里我把MMU关了)
 
-<div align=center> 
-
 ![](/IMG/sdram_qsys_soc.PNG)
-
-</div>
 
 此时综合出来仍有不满足`setuptime`的路径，但都是sdram内部的信号：
 
-<div align=center> 
-
 ![](/IMG/sdram_qsys_setup_time.PNG)
-
-</div>
 
 此时下板出现的情况是读出来的是一些奇怪的数字，而且不时发生变化
 
-<div align=center> 
-
 ![](/IMG/sdram_qsys_serial.PNG)
-
-</div>
 
 ## CONFIG控制器
 
