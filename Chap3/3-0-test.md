@@ -170,7 +170,7 @@ test_ ## testnum: \
     bne testreg, x29, fail;
 ```
 
-追踪到TEST_CASE 一上来是一个声明第一个test，`test_ ## testnum` 将会被展开成 `test_1 test_2` 的形式, 之后code则是通过TEST_IMM_OP传进来的，这里是一个可变参量，所以可以有多条语句。之后将比对运算结果是否是正确的即 `testreg` 的数值是否和 `correctval` 相等，如果不相等就跳转到失败，打印"FAIL"然后返回。
+追踪到TEST\_CASE 一上来是一个声明第一个test，`test_ ## testnum` 将会被展开成 `test_1 test_2` 的形式, 之后code则是通过TEST_IMM_OP传进来的，这里是一个可变参量，所以可以有多条语句。之后将比对运算结果是否是正确的即 `testreg` 的数值是否和 `correctval` 相等，如果不相等就跳转到失败，打印"FAIL"然后返回。
 
 将宏`TEST_IMM_OP`对于本例进行展开就是
 

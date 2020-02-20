@@ -6,5 +6,5 @@ git add .
 git commit -m "update web"
 cd ..
 git add .
-git commit -m "update doc"
+git commit -m "$*"
 git push
