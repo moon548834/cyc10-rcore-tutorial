@@ -73,8 +73,10 @@ Berkeley Boot Loader (BBL) 是 M 态的程序，可以引导我们移植的 BBL-
 ## step2
 
 跳转到 **init_first_hart** 这个C语言函数后，进行了一些列初始化的工作，包括M态的一些csr设置，fp初始化，解析在地址0x00001000处的config_string，初始化中断，初始化内存单元，及以上相关操作的检测，最后是加载OS，具体函数位于 
-- `./machine/minit,c`
-- `./machine/
+- ./machine/minit
+- ./machine/
+
+> 实际上这个config_string我为了降低仿真时间，大部分都直接在软件写死了。
 
 ```c
 void init_first_hart()
@@ -125,16 +127,18 @@ misa.'D' = 0;
 
 **delegate_traps**:
 ```
-// 将S太的中断和大多数的异常都传递给S态处理 
+// 将S态的中断和大多数的异常都给S态处理 
 mideleg = MIP_SSIP | MIP_STIP | MIP_SEIP
 medeleg = (1U << CAUSE_MISALIGNED_FETCH) |
-          (1U << CAUSE_FAULT_FETCH) |
+          // (1U << CAUSE_FAULT_FETCH) |
           (1U << CAUSE_BREAKPOINT) |
-          (1U << CAUSE_FAULT_LOAD) |
-          (1U << CAUSE_FAULT_STORE) |
+          // (1U << CAUSE_FAULT_LOAD) |
+          // (1U << CAUSE_FAULT_STORE) |
           (1U << CAUSE_BREAKPOINT) |
           (1U << CAUSE_USER_ECALL);
 ```
+
+> 需要注意的是，对于**有些异常，还是交由M态处理**的(就是那些mideleg和medeleg没有置0的位对应的异常中断)，因为实际上这个cpu的页表替换功能不是很健全，需要软件的协助，这部分的软件实际上位于bbl，也就是说当发生某些异常如page_fault的时候，操作系统会维护一些部分，bbl也会维护一些部分，硬件做的是只是读/写对应的tlb表项，而硬件并不会自主替换哪个页表(比如替换算法就是bbl来维护的)，这一点与原来的bbl不一样需要特别留意，否则无法理解整个系统的运作。
 
 此后进入到 **hls_init** ，但由于这个函数会被parse_config再调用一次，所以等之后一起分析，
 
@@ -218,31 +222,28 @@ typedef struct {
 } Elf32_Ehdr;
 ```
 
-一开始的几个结构从`e_ident`到`e_version`都是存储的关于文件格式信息，在`load_kernel_elf`这个函数开始进行了相关检查，包含头格式，物理地址大小等。由于最终采取的是4KB映射，所以此时修改了第一个空闲物理地址的起始位置时页对齐，而不是巨页对齐。
+一开始的几个结构从`e_ident`到`e_version`都是存储的关于文件格式信息，在`load_kernel_elf`这个函数开始进行了相关检查，包含头格式，物理地址大小等。(如果最终采取的是4KB映射，所以此时修改了第一个空闲物理地址的起始位置时页对齐，而不是巨页对齐。)
 
 ```c
 first_free_paddr = ROUNDUP(first_free_paddr, RISCV_PGSIZE);
 ```
+
 之后函数通过检测所有的加载段，来获取最小的虚拟地址。然后进行段的复制(从物理地址到虚拟地址的位置，实际上应该是从物理地址A到虚拟地址所映射的物理地址B的复制，**不过此时还没映射，但可以看作是上面那句话**)，这样设置完页表就可以进入到`e_entry`执行程序了。所以执行程序之前还需要进行一些M态的设置，
 
 **superviosr_vm_init**:页表设置
-这也就是`supervisor_vm_init`函数的工作，最关键的是设置页表的映射，另外需要注意的是最后需要把sbi映射到虚地址的最顶端部分。在看源码结合lxs工作的同时，我注意到
+这也就是`supervisor_vm_init`函数的工作，最关键的是设置页表的映射，另外需要注意的是最后需要把sbi映射到虚地址的最顶端部分。
 
-```c
-for (size_t i = 0; i < num_middle_pts - 1; i++)
-    root_pt[(1<<RISCV_PGLEVEL_BITS)-num_middle_pts+i] = ptd_create(((uintptr_t)middle_pt >> RISCV_PGSHIFT) + i);
+```
+  uintptr_t num_sbi_pages = ((uintptr_t)&_sbi_end - DRAM_BASE - 1) / RISCV_PGSIZE + 1;
+  assert(num_sbi_pages <= (1 << RISCV_PGLEVEL_BITS));
+  for (uintptr_t i = 0; i < num_sbi_pages; i++) { //sbi可能有很多页(二级)
+    uintptr_t idx = (1 << RISCV_PGLEVEL_BITS) - num_sbi_pages + i;
+    sbi_pt[idx] = pte_create((DRAM_BASE / RISCV_PGSIZE) + i, PTE_G | PTE_R | PTE_X);
+  }
+  pte_t* sbi_pte = middle_pt + ((num_middle_pts << RISCV_PGLEVEL_BITS) - 1); //middle_pt = root_pt
+  *sbi_pte = ptd_create((uintptr_t)sbi_pt >> RISCV_PGSHIFT); //最终映射sbi_pt到root_pt上
 ```
 
-这部分的 `num_middle_pts - 1` 就是把最后的位置空给sbi(我的理解是这样)。另外在仿真环境下，由于速度不是很快，所以如果os的虚拟地址从0xc0004000开始的话，因为如下语句：
-
-```c
-size_t num_middle_pts = (-info.first_user_vaddr - 1) / MEGAPAGE_SIZE + 1;
-pte_t* root_pt = (void*)middle_pt + num_middle_pts * RISCV_PGSIZE;
-memset(middle_pt, 0, (num_middle_pts + 1) * RISCV_PGSIZE);
-```
-
-会导致初始化非常大的空间，但其实没有必要，因为os用不到那么多，所以我这里把os的虚起始地址设置为0xfc40_0000，目的是减小`num_middle_pts`，加快仿真。
-
-> 这部分都是一些页表的操作，还是建议理解清楚
+> 这部分都是一些页表的操作，还是建议通过阅读源码理解清楚(Ps: 实际上这里不映射也行的，因为ecall也是交由M态处理了qaq)
 
 在函数最后刷新`sptbr`也就是`satp`,之后便进入到S态的os中了。
