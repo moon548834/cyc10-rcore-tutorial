@@ -247,3 +247,93 @@ first_free_paddr = ROUNDUP(first_free_paddr, RISCV_PGSIZE);
 > 这部分都是一些页表的操作，还是建议通过阅读源码理解清楚(Ps: 实际上这里不映射也行的，因为ecall也是交由M态处理了qaq)
 
 在函数最后刷新`sptbr`也就是`satp`,之后便进入到S态的os中了。
+
+# bbl对TLB的支持实现
+
+仅仅是了解了启动流程还是不够的，我们需要关注一些软硬件配合的细节，这里需要强调一点是由于硬件并没有完全控制tlb的过程，所以实际上是由软件维护tlb的，比如tlb满的时候究竟要换哪个页。这个tlb表项要写入的数值是什么等等。
+
+首先我们来看 `./machine/mentry.S`这个文件，
+
+```
+trap_table:
+  .word bad_trap
+  .word tlb_i_miss_trap
+  .word illegal_insn_trap
+  .word bad_trap
+  .word misaligned_load_trap
+  .word tlb_r_miss_trap
+  .word misaligned_store_trap
+  .word tlb_w_miss_trap
+```
+
+代码一开始就是一个`trap_table`里面储存着各个trap的处理程序，举个例子，对于`tlb_i_miss_trap`而言,他对应的函数位于`./machine/emulation.c`中:
+```
+void tlb_i_miss_trap(uintptr_t* regs, uintptr_t mcause, uintptr_t mepc)
+{
+  tlb_miss_trap(regs, mcause, mepc, 1, 0, 0);
+}
+```
+
+我们目前先不关心这个函数究竟干什么了，只需要知道这个`trap_table`是存储的各种trap的处理程序的地址就可以。由于这些trap都是在m态被触发的，结合RISCV的架构，我们知道有一个`mtvec`的寄存器十分关键，在处理器m态下发生异常时，硬件会根据mtvec跳转到相应的地址，那么在bbl中mtvec被设置成什么了呢？实际上就在`./machine/mentry.S`中
+
+```
+  la t0, trap_vector
+  csrw mtvec, t0
+```
+
+这里我们看到，bbl把trap_vector赋值给了mtvec,而trap_vector也在这个文件中，对应代码如下:
+
+```
+trap_vector:
+  csrrw sp, mscratch, sp
+  beqz sp, .Ltrap_from_machine_mode # 这里也是最终跳转到.Lhandle_trap_in_machine_mode中的
+
+  STORE a0, 10*REGBYTES(sp)
+  STORE a1, 11*REGBYTES(sp)
+
+  csrr a1, mcause
+  bgez a1, .Lhandle_trap_in_machine_mode
+
+  # This is an interrupt.  Discard the mcause MSB and decode the rest.
+  sll a1, a1, 1
+
+  # Is it a machine timer interrupt?
+  li a0, IRQ_M_TIMER * 2
+  bne a0, a1, 1f
+  li a1, TIMER_INTERRUPT_VECTOR
+  j .Lhandle_trap_in_machine_mode
+  
+```
+这里我们看到根据中断异常不同的类型，最终都会跳转到 .Lhandle_trap_in_machine_mode中
+
+```
+.Lhandle_trap_in_machine_mode:
+  # Preserve the registers.  Compute the address of the trap handler.
+  STORE ra, 1*REGBYTES(sp)
+  STORE gp, 3*REGBYTES(sp)
+  STORE tp, 4*REGBYTES(sp)
+  STORE t0, 5*REGBYTES(sp)
+1:auipc t0, %pcrel_hi(trap_table)  # t0 <- %hi(trap_table) 
+  STORE t1, 6*REGBYTES(sp)
+  sll t1, a1, 2                    # t1 <- mcause << 2
+  STORE t2, 7*REGBYTES(sp)
+  add t1, t0, t1                   # t1 <- %hi(trap_table)[mcause]
+  STORE s0, 8*REGBYTES(sp)
+  LWU t1, %pcrel_lo(1b)(t1)         # t1 <- trap_table[mcause] #GOT表 indirect addressing
+  STORE s1, 9*REGBYTES(sp)
+  mv a0, sp                        # a0 <- regs
+  STORE a2,12*REGBYTES(sp)
+  csrr a2, mepc                    # a2 <- mepc
+  STORE a3,13*REGBYTES(sp)
+  csrrw t0, mscratch, x0           # t0 <- user sp
+  STORE a4,14*REGBYTES(sp)
+  # more store ...
+  jalr t1 # 跳转到t1对应的地址
+  # restore ...
+```
+
+可以看到根据mcause选择相应的trap_table的偏移量(即对应哪个trap处理程序),t1最终就指向了对应的处理程序的地址，最终一个jalr就跳转过去了。
+
+现在我们就大致搞清了，当发生一个trap的时候，究竟bbl哪部分在起作用，整个流程是如何的。当我们的操作系统在S态发生一个tlb_i_miss的时候，会出现一个strap，着个strap由于medeleg的设置对应位是0，所以交给了M态处理，处理的函数就是trap_vector，根据mcause里面对应的trap，软件会知道这个是一个tlb_i_miss，进行一些跳转前的保护寄存器的工作后，就跳转到这个trap_table里面对应的tlb_i_miss的地址上去执行了，执行完毕后，就恢复寄存器最后执行mret就可以了。
+
+下一步我们来看看究竟tlb_i_miss中间bbl干了什么(这部分是原来bbl没有的，大部分程序都是由lkx添加的)
