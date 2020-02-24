@@ -431,14 +431,89 @@ csrr a2, mepc                    # a2 <- mepc
 
 涉及到的寄存器主要及功能如下表：
 
-CSR寄存器数值 | 对应硬件宏       | 含义
------------- | ----------       | ------
-0x7c0        | CSR_mtlbindex    |
+CSR寄存器数值 | 对应硬件宏       | 
+------------ | ----------       | 
+0x7c0        | CSR_mtlbindex    |  
 0x7c1        | CSR_mtlbvpn      |
 0x7c2        | CSR_mtlbmask     |
 0x7c3        | CSR_mtlbpte      |
 0x7c4        | CSR_mtlbptevaddr |
 
+根据硬件宏的名字，应该直接能大致推断出来什么意思，好了有了大概的认知,我们接下来看这段程序:
+
+```
+      pte |= PTE_A;
+      if(wt) pte |= PTE_D;
+      *pte_p = pte;
+```
+
+首先置access位，如果是write的话把dirty位页置1。
+
+```
+      if(((uintptr_t)read_csr(0x7c0)) >> (__riscv_xlen - 1))
+      {
+        uintptr_t index_old = read_csr(0x7c0);
+        uintptr_t va_old = read_csr(0x7c1);
+        uintptr_t mask_old = read_csr(0x7c2);
+        uintptr_t pte_old = read_csr(0x7c3);
+        uintptr_t *pte_p_old = (uintptr_t *)read_csr(0x7c4);
+```
+
+这里0x7c0代表的是mtlbindex，如果mtlbindex最高位是1的话就更新，结合硬件看一下:
+```
+	`ifdef RV32
+		`define CSR_mtlbindex_update_bus 31:31
+	`else
+
+  `CSR_mtlbindex:
+				begin
+					data_o[`CSR_mtlbindex_bus] <= mtlbindex;
+					data_o[`CSR_mtlbindex_update_bus] <= mtlbindex_update;
+				end
+```
+
+当我们读0x7c0的CSR的时候，实际上就是CSR_mtlbindex那条Verilog语句，这里的`CSR_mtlbindex_update_bus`就是31，就和软件bbl对应上了。然后分别把这几个csr寄存器读出来。做一些检查之后,进行更新:
+```
+        *pte_p = pte;
+        write_csr(0x7c3, pte);
+
+        write_csr(0x7c0, index_old);
+        assert(read_csr(0x7c0) == (index_old << 1) >> 1);
+        return;
+      }// 结束if
+```
+注意以上部分(if里)更新的是hit了，但是没有A标志位，或者是写操作但是D标志位是0的情况,结合verilog代码我们看到如下语句:
+```
+update_exception[i] <= !hit[i];
+if(tlb_pte[i][`PTE_A] == 1'b0)
+		update_exception[i] <= 1'b1;
+if(we_i == `WriteEnable && tlb_pte[i][`PTE_D] == 1'b0)
+		update_exception[i] <= 1'b1;
+```
+
+而update_exception则是:
+
+```
+if(tlb_miss_exception)
+	tlb_update_o <= `False_v;
+else
+	tlb_update_o <= update_exception[hit_index_o];
+```
+
+所以只会在没有miss的时候，update才会发生，也就是上面这些行为。那么miss的处理过程如下:
+
+```
+      write_csr(0x7c0, index);
+      write_csr(0x7c1, va & mask);
+      write_csr(0x7c2, mask);
+      write_csr(0x7c3, pte);
+      write_csr(0x7c4, pte_p);
+
+      index += 1;
+      return;
+```
+
+注意此时的index是一个static变量，所以这个替换过程是一个简单的fifo。另外对于sfence.vm的处理，则是把它当作指令缺失地异常处理，最终的思想是相似的，如果理解了tlb替换的过程，sfence.vma的替换想必也可明白。
 
 
 
