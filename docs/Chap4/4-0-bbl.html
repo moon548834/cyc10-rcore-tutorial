@@ -65,7 +65,7 @@
     <link rel="shortcut icon" href="../gitbook/images/favicon.ico" type="image/x-icon">
 
     
-    <link rel="next" href="../chap5/5-0-os.md" />
+    <link rel="next" href="../chap5/5-0-os.html" />
     
     
     <link rel="prev" href="../Chap3/3-0-test.html" />
@@ -200,9 +200,9 @@
             
         </li>
     
-        <li class="chapter " data-level="1.6" data-path="../chap5/5-0-os.md">
+        <li class="chapter " data-level="1.6" data-path="../chap5/5-0-os.html">
             
-                <span>
+                <a href="../chap5/5-0-os.html">
             
                     
                     第五章OS分析
@@ -287,7 +287,7 @@
     
                                 <section class="normal markdown-section">
                                 
-                                <div id="anchor-navigation-ex-navbar"><i class="fa fa-anchor"></i><ul><li><span class="title-icon "></span><a href="#bbl&#x542F;&#x52A8;&#x6D41;&#x7A0B;&#x5206;&#x6790;"><b></b>bbl&#x542F;&#x52A8;&#x6D41;&#x7A0B;&#x5206;&#x6790;</a></li><ul><li><span class="title-icon "></span><a href="#step1"><b></b>step1</a></li><li><span class="title-icon "></span><a href="#step2"><b></b>step2</a></li><li><span class="title-icon "></span><a href="#step3-bootloader"><b></b>step3 boot_loader</a></li></ul></ul></div><a href="#bbl&#x542F;&#x52A8;&#x6D41;&#x7A0B;&#x5206;&#x6790;" id="anchorNavigationExGoTop"><i class="fa fa-arrow-up"></i></a><h1 id="bbl&#x542F;&#x52A8;&#x6D41;&#x7A0B;&#x5206;&#x6790;"><a name="bbl&#x542F;&#x52A8;&#x6D41;&#x7A0B;&#x5206;&#x6790;" class="anchor-navigation-ex-anchor" href="#bbl&#x542F;&#x52A8;&#x6D41;&#x7A0B;&#x5206;&#x6790;"><i class="fa fa-link" aria-hidden="true"></i></a>bbl&#x542F;&#x52A8;&#x6D41;&#x7A0B;&#x5206;&#x6790;</h1>
+                                <div id="anchor-navigation-ex-navbar"><i class="fa fa-anchor"></i><ul><li><span class="title-icon "></span><a href="#bbl&#x542F;&#x52A8;&#x6D41;&#x7A0B;&#x5206;&#x6790;"><b></b>bbl&#x542F;&#x52A8;&#x6D41;&#x7A0B;&#x5206;&#x6790;</a></li><ul><li><span class="title-icon "></span><a href="#step1"><b></b>step1</a></li><li><span class="title-icon "></span><a href="#step2"><b></b>step2</a></li><li><span class="title-icon "></span><a href="#step3-bootloader"><b></b>step3 boot_loader</a></li></ul><li><span class="title-icon "></span><a href="#bbl&#x5BF9;tlb&#x7684;&#x652F;&#x6301;&#x5B9E;&#x73B0;"><b></b>bbl&#x5BF9;TLB&#x7684;&#x652F;&#x6301;&#x5B9E;&#x73B0;</a></li></ul></div><a href="#bbl&#x542F;&#x52A8;&#x6D41;&#x7A0B;&#x5206;&#x6790;" id="anchorNavigationExGoTop"><i class="fa fa-arrow-up"></i></a><h1 id="bbl&#x542F;&#x52A8;&#x6D41;&#x7A0B;&#x5206;&#x6790;"><a name="bbl&#x542F;&#x52A8;&#x6D41;&#x7A0B;&#x5206;&#x6790;" class="anchor-navigation-ex-anchor" href="#bbl&#x542F;&#x52A8;&#x6D41;&#x7A0B;&#x5206;&#x6790;"><i class="fa fa-link" aria-hidden="true"></i></a>bbl&#x542F;&#x52A8;&#x6D41;&#x7A0B;&#x5206;&#x6790;</h1>
 <p>Berkeley Boot Loader (BBL) &#x662F; M &#x6001;&#x7684;&#x7A0B;&#x5E8F;&#xFF0C;&#x53EF;&#x4EE5;&#x5F15;&#x5BFC;&#x6211;&#x4EEC;&#x79FB;&#x690D;&#x7684; BBL-uCore&#x4EE5;&#x53CA; linux&#x7B49;&#x64CD;&#x4F5C;&#x7CFB;&#x7EDF;&#x3002;&#x5176;&#x57FA;&#x672C;&#x4E0A;&#x53EF;&#x4EE5;&#x8BA4;&#x4E3A;&#x662F;&#x786C;&#x4EF6;/&#x8F6F;&#x4EF6;&#x7684;&#x63A5;&#x53E3;&#xFF0C;&#x65E0;&#x8BBA;&#x662F;&#x5BF9;&#x4E8E;&#x64CD;&#x4F5C;
 &#x7CFB;&#x7EDF;&#x7684;&#x79FB;&#x690D;&#xFF0C;&#x8FD8;&#x662F;&#x5BF9;&#x4E8E; RISC-V &#x7684;&#x786C;&#x4EF6;&#x8BBE;&#x8BA1;&#xFF0C;&#x90FD;&#x662F;&#x540C;&#x7B49;&#x7684;&#x91CD;&#x8981;&#x7684;&#x3002;&#x4E0B;&#x9762;&#x7B80;&#x8981;&#x4ECB;&#x7ECD; BBL &#x6240;&#x5B8C;&#x6210;&#x7684;&#x529F;&#x80FD;&#x3002;(&#x4EE5;&#x4E0B;&#x5DE5;&#x4F5C;&#x90E8;&#x5206;&#x53C2;&#x8003;&#x4E86;lkx&#x7684;&#x62A5;&#x544A;)</p>
 <h2 id="step1"><a name="step1" class="anchor-navigation-ex-anchor" href="#step1"><i class="fa fa-link" aria-hidden="true"></i></a>step1</h2>
@@ -499,7 +499,73 @@ enter_supervisor_mode((<span class="hljs-keyword">void</span> *)info.entry, <spa
 </code></pre><blockquote>
 <p>&#x8FD9;&#x90E8;&#x5206;&#x90FD;&#x662F;&#x4E00;&#x4E9B;&#x9875;&#x8868;&#x7684;&#x64CD;&#x4F5C;&#xFF0C;&#x8FD8;&#x662F;&#x5EFA;&#x8BAE;&#x901A;&#x8FC7;&#x9605;&#x8BFB;&#x6E90;&#x7801;&#x7406;&#x89E3;&#x6E05;&#x695A;(Ps: &#x5B9E;&#x9645;&#x4E0A;&#x8FD9;&#x91CC;&#x4E0D;&#x6620;&#x5C04;&#x4E5F;&#x884C;&#x7684;&#xFF0C;&#x56E0;&#x4E3A;ecall&#x4E5F;&#x662F;&#x4EA4;&#x7531;M&#x6001;&#x5904;&#x7406;&#x4E86;qaq)</p>
 </blockquote>
-<p>&#x5728;&#x51FD;&#x6570;&#x6700;&#x540E;&#x5237;&#x65B0;<code>sptbr</code>&#x4E5F;&#x5C31;&#x662F;<code>satp</code>,&#x4E4B;&#x540E;&#x4FBF;&#x8FDB;&#x5165;&#x5230;S&#x6001;&#x7684;os&#x4E2D;&#x4E86;&#x3002;
+<p>&#x5728;&#x51FD;&#x6570;&#x6700;&#x540E;&#x5237;&#x65B0;<code>sptbr</code>&#x4E5F;&#x5C31;&#x662F;<code>satp</code>,&#x4E4B;&#x540E;&#x4FBF;&#x8FDB;&#x5165;&#x5230;S&#x6001;&#x7684;os&#x4E2D;&#x4E86;&#x3002;</p>
+<h1 id="bbl&#x5BF9;tlb&#x7684;&#x652F;&#x6301;&#x5B9E;&#x73B0;"><a name="bbl&#x5BF9;tlb&#x7684;&#x652F;&#x6301;&#x5B9E;&#x73B0;" class="anchor-navigation-ex-anchor" href="#bbl&#x5BF9;tlb&#x7684;&#x652F;&#x6301;&#x5B9E;&#x73B0;"><i class="fa fa-link" aria-hidden="true"></i></a>bbl&#x5BF9;TLB&#x7684;&#x652F;&#x6301;&#x5B9E;&#x73B0;</h1>
+<p>&#x4EC5;&#x4EC5;&#x662F;&#x4E86;&#x89E3;&#x4E86;&#x542F;&#x52A8;&#x6D41;&#x7A0B;&#x8FD8;&#x662F;&#x4E0D;&#x591F;&#x7684;&#xFF0C;&#x6211;&#x4EEC;&#x9700;&#x8981;&#x5173;&#x6CE8;&#x4E00;&#x4E9B;&#x8F6F;&#x786C;&#x4EF6;&#x914D;&#x5408;&#x7684;&#x7EC6;&#x8282;&#xFF0C;&#x8FD9;&#x91CC;&#x9700;&#x8981;&#x5F3A;&#x8C03;&#x4E00;&#x70B9;&#x662F;&#x7531;&#x4E8E;&#x786C;&#x4EF6;&#x5E76;&#x6CA1;&#x6709;&#x5B8C;&#x5168;&#x63A7;&#x5236;tlb&#x7684;&#x8FC7;&#x7A0B;&#xFF0C;&#x6240;&#x4EE5;&#x5B9E;&#x9645;&#x4E0A;&#x662F;&#x7531;&#x8F6F;&#x4EF6;&#x7EF4;&#x62A4;tlb&#x7684;&#xFF0C;&#x6BD4;&#x5982;tlb&#x6EE1;&#x7684;&#x65F6;&#x5019;&#x7A76;&#x7ADF;&#x8981;&#x6362;&#x54EA;&#x4E2A;&#x9875;&#x3002;&#x8FD9;&#x4E2A;tlb&#x8868;&#x9879;&#x8981;&#x5199;&#x5165;&#x7684;&#x6570;&#x503C;&#x662F;&#x4EC0;&#x4E48;&#x7B49;&#x7B49;&#x3002;</p>
+<p>&#x9996;&#x5148;&#x6211;&#x4EEC;&#x6765;&#x770B; <code>./machine/mentry.S</code>&#x8FD9;&#x4E2A;&#x6587;&#x4EF6;&#xFF0C;</p>
+<pre><code>trap_table:
+  .word bad_trap
+  .word tlb_i_miss_trap
+  .word illegal_insn_trap
+  .word bad_trap
+  .word misaligned_load_trap
+  .word tlb_r_miss_trap
+  .word misaligned_store_trap
+  .word tlb_w_miss_trap
+</code></pre><p>&#x4EE3;&#x7801;&#x4E00;&#x5F00;&#x59CB;&#x5C31;&#x662F;&#x4E00;&#x4E2A;<code>trap_table</code>&#x91CC;&#x9762;&#x50A8;&#x5B58;&#x7740;&#x5404;&#x4E2A;trap&#x7684;&#x5904;&#x7406;&#x7A0B;&#x5E8F;&#xFF0C;&#x4E3E;&#x4E2A;&#x4F8B;&#x5B50;&#xFF0C;&#x5BF9;&#x4E8E;<code>tlb_i_miss_trap</code>&#x800C;&#x8A00;,&#x4ED6;&#x5BF9;&#x5E94;&#x7684;&#x51FD;&#x6570;&#x4F4D;&#x4E8E;<code>./machine/emulation.c</code>&#x4E2D;:</p>
+<pre><code>void tlb_i_miss_trap(uintptr_t* regs, uintptr_t mcause, uintptr_t mepc)
+{
+  tlb_miss_trap(regs, mcause, mepc, 1, 0, 0);
+}
+</code></pre><p>&#x6211;&#x4EEC;&#x76EE;&#x524D;&#x5148;&#x4E0D;&#x5173;&#x5FC3;&#x8FD9;&#x4E2A;&#x51FD;&#x6570;&#x7A76;&#x7ADF;&#x5E72;&#x4EC0;&#x4E48;&#x4E86;&#xFF0C;&#x53EA;&#x9700;&#x8981;&#x77E5;&#x9053;&#x8FD9;&#x4E2A;<code>trap_table</code>&#x662F;&#x5B58;&#x50A8;&#x7684;&#x5404;&#x79CD;trap&#x7684;&#x5904;&#x7406;&#x7A0B;&#x5E8F;&#x7684;&#x5730;&#x5740;&#x5C31;&#x53EF;&#x4EE5;&#x3002;&#x7531;&#x4E8E;&#x8FD9;&#x4E9B;trap&#x90FD;&#x662F;&#x5728;m&#x6001;&#x88AB;&#x89E6;&#x53D1;&#x7684;&#xFF0C;&#x7ED3;&#x5408;RISCV&#x7684;&#x67B6;&#x6784;&#xFF0C;&#x6211;&#x4EEC;&#x77E5;&#x9053;&#x6709;&#x4E00;&#x4E2A;<code>mtvec</code>&#x7684;&#x5BC4;&#x5B58;&#x5668;&#x5341;&#x5206;&#x5173;&#x952E;&#xFF0C;&#x5728;&#x5904;&#x7406;&#x5668;m&#x6001;&#x4E0B;&#x53D1;&#x751F;&#x5F02;&#x5E38;&#x65F6;&#xFF0C;&#x786C;&#x4EF6;&#x4F1A;&#x6839;&#x636E;mtvec&#x8DF3;&#x8F6C;&#x5230;&#x76F8;&#x5E94;&#x7684;&#x5730;&#x5740;&#xFF0C;&#x90A3;&#x4E48;&#x5728;bbl&#x4E2D;mtvec&#x88AB;&#x8BBE;&#x7F6E;&#x6210;&#x4EC0;&#x4E48;&#x4E86;&#x5462;&#xFF1F;&#x5B9E;&#x9645;&#x4E0A;&#x5C31;&#x5728;<code>./machine/mentry.S</code>&#x4E2D;</p>
+<pre><code>  la t0, trap_vector
+  csrw mtvec, t0
+</code></pre><p>&#x8FD9;&#x91CC;&#x6211;&#x4EEC;&#x770B;&#x5230;&#xFF0C;bbl&#x628A;trap_vector&#x8D4B;&#x503C;&#x7ED9;&#x4E86;mtvec,&#x800C;trap_vector&#x4E5F;&#x5728;&#x8FD9;&#x4E2A;&#x6587;&#x4EF6;&#x4E2D;&#xFF0C;&#x5BF9;&#x5E94;&#x4EE3;&#x7801;&#x5982;&#x4E0B;:</p>
+<pre><code>trap_vector:
+  csrrw sp, mscratch, sp
+  beqz sp, .Ltrap_from_machine_mode # &#x8FD9;&#x91CC;&#x4E5F;&#x662F;&#x6700;&#x7EC8;&#x8DF3;&#x8F6C;&#x5230;.Lhandle_trap_in_machine_mode&#x4E2D;&#x7684;
+
+  STORE a0, 10*REGBYTES(sp)
+  STORE a1, 11*REGBYTES(sp)
+
+  csrr a1, mcause
+  bgez a1, .Lhandle_trap_in_machine_mode
+
+  # This is an interrupt.  Discard the mcause MSB and decode the rest.
+  sll a1, a1, 1
+
+  # Is it a machine timer interrupt?
+  li a0, IRQ_M_TIMER * 2
+  bne a0, a1, 1f
+  li a1, TIMER_INTERRUPT_VECTOR
+  j .Lhandle_trap_in_machine_mode
+</code></pre><p>&#x8FD9;&#x91CC;&#x6211;&#x4EEC;&#x770B;&#x5230;&#x6839;&#x636E;&#x4E2D;&#x65AD;&#x5F02;&#x5E38;&#x4E0D;&#x540C;&#x7684;&#x7C7B;&#x578B;&#xFF0C;&#x6700;&#x7EC8;&#x90FD;&#x4F1A;&#x8DF3;&#x8F6C;&#x5230; .Lhandle_trap_in_machine_mode&#x4E2D;</p>
+<pre><code>.Lhandle_trap_in_machine_mode:
+  # Preserve the registers.  Compute the address of the trap handler.
+  STORE ra, 1*REGBYTES(sp)
+  STORE gp, 3*REGBYTES(sp)
+  STORE tp, 4*REGBYTES(sp)
+  STORE t0, 5*REGBYTES(sp)
+1:auipc t0, %pcrel_hi(trap_table)  # t0 &lt;- %hi(trap_table) 
+  STORE t1, 6*REGBYTES(sp)
+  sll t1, a1, 2                    # t1 &lt;- mcause &lt;&lt; 2
+  STORE t2, 7*REGBYTES(sp)
+  add t1, t0, t1                   # t1 &lt;- %hi(trap_table)[mcause]
+  STORE s0, 8*REGBYTES(sp)
+  LWU t1, %pcrel_lo(1b)(t1)         # t1 &lt;- trap_table[mcause] #GOT&#x8868; indirect addressing
+  STORE s1, 9*REGBYTES(sp)
+  mv a0, sp                        # a0 &lt;- regs
+  STORE a2,12*REGBYTES(sp)
+  csrr a2, mepc                    # a2 &lt;- mepc
+  STORE a3,13*REGBYTES(sp)
+  csrrw t0, mscratch, x0           # t0 &lt;- user sp
+  STORE a4,14*REGBYTES(sp)
+  # more store ...
+  jalr t1 # &#x8DF3;&#x8F6C;&#x5230;t1&#x5BF9;&#x5E94;&#x7684;&#x5730;&#x5740;
+  # restore ...
+</code></pre><p>&#x53EF;&#x4EE5;&#x770B;&#x5230;&#x6839;&#x636E;mcause&#x9009;&#x62E9;&#x76F8;&#x5E94;&#x7684;trap_table&#x7684;&#x504F;&#x79FB;&#x91CF;(&#x5373;&#x5BF9;&#x5E94;&#x54EA;&#x4E2A;trap&#x5904;&#x7406;&#x7A0B;&#x5E8F;),t1&#x6700;&#x7EC8;&#x5C31;&#x6307;&#x5411;&#x4E86;&#x5BF9;&#x5E94;&#x7684;&#x5904;&#x7406;&#x7A0B;&#x5E8F;&#x7684;&#x5730;&#x5740;&#xFF0C;&#x6700;&#x7EC8;&#x4E00;&#x4E2A;jalr&#x5C31;&#x8DF3;&#x8F6C;&#x8FC7;&#x53BB;&#x4E86;&#x3002;</p>
+<p>&#x73B0;&#x5728;&#x6211;&#x4EEC;&#x5C31;&#x5927;&#x81F4;&#x641E;&#x6E05;&#x4E86;&#xFF0C;&#x5F53;&#x53D1;&#x751F;&#x4E00;&#x4E2A;trap&#x7684;&#x65F6;&#x5019;&#xFF0C;&#x7A76;&#x7ADF;bbl&#x54EA;&#x90E8;&#x5206;&#x5728;&#x8D77;&#x4F5C;&#x7528;&#xFF0C;&#x6574;&#x4E2A;&#x6D41;&#x7A0B;&#x662F;&#x5982;&#x4F55;&#x7684;&#x3002;&#x5F53;&#x6211;&#x4EEC;&#x7684;&#x64CD;&#x4F5C;&#x7CFB;&#x7EDF;&#x5728;S&#x6001;&#x53D1;&#x751F;&#x4E00;&#x4E2A;tlb_i_miss&#x7684;&#x65F6;&#x5019;&#xFF0C;&#x4F1A;&#x51FA;&#x73B0;&#x4E00;&#x4E2A;strap&#xFF0C;&#x7740;&#x4E2A;strap&#x7531;&#x4E8E;medeleg&#x7684;&#x8BBE;&#x7F6E;&#x5BF9;&#x5E94;&#x4F4D;&#x662F;0&#xFF0C;&#x6240;&#x4EE5;&#x4EA4;&#x7ED9;&#x4E86;M&#x6001;&#x5904;&#x7406;&#xFF0C;&#x5904;&#x7406;&#x7684;&#x51FD;&#x6570;&#x5C31;&#x662F;trap_vector&#xFF0C;&#x6839;&#x636E;mcause&#x91CC;&#x9762;&#x5BF9;&#x5E94;&#x7684;trap&#xFF0C;&#x8F6F;&#x4EF6;&#x4F1A;&#x77E5;&#x9053;&#x8FD9;&#x4E2A;&#x662F;&#x4E00;&#x4E2A;tlb_i_miss&#xFF0C;&#x8FDB;&#x884C;&#x4E00;&#x4E9B;&#x8DF3;&#x8F6C;&#x524D;&#x7684;&#x4FDD;&#x62A4;&#x5BC4;&#x5B58;&#x5668;&#x7684;&#x5DE5;&#x4F5C;&#x540E;&#xFF0C;&#x5C31;&#x8DF3;&#x8F6C;&#x5230;&#x8FD9;&#x4E2A;trap_table&#x91CC;&#x9762;&#x5BF9;&#x5E94;&#x7684;tlb_i_miss&#x7684;&#x5730;&#x5740;&#x4E0A;&#x53BB;&#x6267;&#x884C;&#x4E86;&#xFF0C;&#x6267;&#x884C;&#x5B8C;&#x6BD5;&#x540E;&#xFF0C;&#x5C31;&#x6062;&#x590D;&#x5BC4;&#x5B58;&#x5668;&#x6700;&#x540E;&#x6267;&#x884C;mret&#x5C31;&#x53EF;&#x4EE5;&#x4E86;&#x3002;</p>
+<p>&#x4E0B;&#x4E00;&#x6B65;&#x6211;&#x4EEC;&#x6765;&#x770B;&#x770B;&#x7A76;&#x7ADF;tlb_i_miss&#x4E2D;&#x95F4;bbl&#x5E72;&#x4E86;&#x4EC0;&#x4E48;(&#x8FD9;&#x90E8;&#x5206;&#x662F;&#x539F;&#x6765;bbl&#x6CA1;&#x6709;&#x7684;&#xFF0C;&#x5927;&#x90E8;&#x5206;&#x7A0B;&#x5E8F;&#x90FD;&#x662F;&#x7531;lkx&#x6DFB;&#x52A0;&#x7684;)
 <div id="page-footer" class="localized-footer"><hr><p><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css"></p>
 <script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
 <div id="gitalk-container" style="margin: 5%"></div>
@@ -581,7 +647,7 @@ enter_supervisor_mode((<span class="hljs-keyword">void</span> *)info.entry, <spa
                 </a>
                 
                 
-                <a href="../chap5/5-0-os.md" class="navigation navigation-next " aria-label="Next page: 第五章OS分析">
+                <a href="../chap5/5-0-os.html" class="navigation navigation-next " aria-label="Next page: 第五章OS分析">
                     <i class="fa fa-angle-right"></i>
                 </a>
                 
@@ -592,7 +658,7 @@ enter_supervisor_mode((<span class="hljs-keyword">void</span> *)info.entry, <spa
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"第四章bbl分析","level":"1.5","depth":1,"next":{"title":"第五章OS分析","level":"1.6","depth":1,"path":"chap5/5-0-os.md","ref":"chap5/5-0-os.md","articles":[]},"previous":{"title":"第三章指令测试","level":"1.4","depth":1,"path":"Chap3/3-0-test.md","ref":"Chap3/3-0-test.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":["chapter-fold","code","search-pro","github","ancre-navigation","localized-footer","-sharing"],"pluginsConfig":{"chapter-fold":{},"github":{"url":"https://github.com/moon548834/cyc10-rcore-tutorial"},"search-pro":{},"search":{},"localized-footer":{"filename":"gitbook/comment.html","hline":"true"},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"code":{"copyButtons":true},"fontsettings":{"theme":"white","family":"sans","size":2},"highlight":{},"ancre-navigation":{"associatedWithSummary":true,"float":{"level1Icon":"","level2Icon":"","level3Icon":"","showLevelIcon":false},"mode":"float","multipleH1":true,"pageTop":{"level1Icon":"","level2Icon":"","level3Icon":"","showLevelIcon":false},"printLog":false,"showLevel":true},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"gitbook/website.css"}},"file":{"path":"Chap4/4-0-bbl.md","mtime":"2020-02-23T01:00:25.895Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2020-02-23T01:02:45.268Z"},"basePath":"..","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"第四章bbl分析","level":"1.5","depth":1,"next":{"title":"第五章OS分析","level":"1.6","depth":1,"path":"chap5/5-0-os.md","ref":"chap5/5-0-os.md","articles":[]},"previous":{"title":"第三章指令测试","level":"1.4","depth":1,"path":"Chap3/3-0-test.md","ref":"Chap3/3-0-test.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":["chapter-fold","code","search-pro","github","ancre-navigation","localized-footer","-sharing"],"pluginsConfig":{"chapter-fold":{},"github":{"url":"https://github.com/moon548834/cyc10-rcore-tutorial"},"search-pro":{},"search":{},"localized-footer":{"filename":"gitbook/comment.html","hline":"true"},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"code":{"copyButtons":true},"fontsettings":{"theme":"white","family":"sans","size":2},"highlight":{},"ancre-navigation":{"associatedWithSummary":true,"float":{"level1Icon":"","level2Icon":"","level3Icon":"","showLevelIcon":false},"mode":"float","multipleH1":true,"pageTop":{"level1Icon":"","level2Icon":"","level3Icon":"","showLevelIcon":false},"printLog":false,"showLevel":true},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"gitbook/website.css"}},"file":{"path":"Chap4/4-0-bbl.md","mtime":"2020-02-24T05:46:28.007Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2020-02-24T05:47:42.189Z"},"basePath":"..","book":{"language":""}});
         });
     </script>
 </div>
