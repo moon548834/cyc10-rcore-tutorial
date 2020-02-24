@@ -337,3 +337,113 @@ trap_vector:
 现在我们就大致搞清了，当发生一个trap的时候，究竟bbl哪部分在起作用，整个流程是如何的。当我们的操作系统在S态发生一个tlb_i_miss的时候，会出现一个strap，着个strap由于medeleg的设置对应位是0，所以交给了M态处理，处理的函数就是trap_vector，根据mcause里面对应的trap，软件会知道这个是一个tlb_i_miss，进行一些跳转前的保护寄存器的工作后，就跳转到这个trap_table里面对应的tlb_i_miss的地址上去执行了，执行完毕后，就恢复寄存器最后执行mret就可以了。
 
 下一步我们来看看究竟tlb_i_miss中间bbl干了什么(这部分是原来bbl没有的，大部分程序都是由lkx添加的)
+
+## tlb_miss_trap
+
+首先无论是指令缺失还是数据缺失最终都会引到`tlb_miss_trap`中,只不过属性值不太一样而已:
+
+```
+void tlb_i_miss_trap(uintptr_t* regs, uintptr_t mcause, uintptr_t mepc)
+{
+  tlb_miss_trap(regs, mcause, mepc, 1, 0, 0);
+}
+void tlb_r_miss_trap(uintptr_t* regs, uintptr_t mcause, uintptr_t mepc)
+{
+  tlb_miss_trap(regs, mcause, mepc, 0, 1, 0);
+}
+void tlb_w_miss_trap(uintptr_t* regs, uintptr_t mcause, uintptr_t mepc)
+{
+  tlb_miss_trap(regs, mcause, mepc, 0, 0, 1);
+}
+```
+
+这个函数`tlb_miss_trap`是控制tlb的核心,我们首先看下这个函数的原型:
+`void tlb_miss_trap(uintptr_t* regs, uintptr_t mcause, uintptr_t mepc, int ex, int rd, int wt)`
+
+还是比较好顾名思义的，所谓regs，就是寄存器的地址, mcause, mepc就是csr中的数值，不过需要注意的是，这里的regs, mcause都已经被**实实在在地存储在内存中某个地方**，而不是硬件中地某个LUT,FF，这点需要搞清楚。
+
+一个自然的问题是他们是怎么完成硬件到内存这样一个过程呢，其实就是在刚刚地`.Lhandle_trap_in_machine_mode:`完成了，我们再来回头看一下:
+
+```
+...
+csrr a1, mcause
+...
+STORE s1, 9*REGBYTES(sp)
+mv a0, sp                        # a0 <- regs
+STORE a2,12*REGBYTES(sp)
+csrr a2, mepc                    # a2 <- mepc
+...
+```
+
+实际上regs(所对应的堆栈sp)和mcause, mepc已经被保存到 a0, a1, a2上了，根据cdecl调用规则和riscv的寄存器调用规则我们就可以知道，当调用这个tlb_miss_trap函数的时候，a2, a1, a1(从右到左)会被依次压栈，然后`tlb_miss_trap`进入这个函数的时候就会依次pop出来使用了。
+
+> 这部分可以更多看看手册，有大致概念就可以
+
+好了我们正式看这个tlb_miss_trap函数了:
+首先获取 mstatus中vm的数值以方便知道是用的RV_32页表还是其他的，然后根据__riscv_xlen的数值,判断是32位还是64位的系统，从而获取相应的页表基地址。这部分代码如下:
+
+```
+
+  uintptr_t mstatus = read_csr(mstatus);
+  uint32_t vm = (EXTRACT_FIELD(mstatus, MSTATUS_VM));
+
+#if __riscv_xlen == 32
+  uint32_t p = 32;
+  uintptr_t a = ((read_csr(sptbr)) & ((1 << 22) - 1)) * RISCV_PGSIZE;
+#else
+  uint32_t p = 64;
+  uintptr_t a = ((read_csr(sptbr)) & ((1ll << 38) - 1)) * RISCV_PGSIZE;
+#endif
+
+  switch(vm)
+  {
+    case VM_SV32: levels = 2; ptesize = 4; vpnlen = 10; break;
+    case VM_SV39: levels = 3; ptesize = 8; vpnlen = 9; break;
+    case VM_SV48: levels = 4; ptesize = 8; vpnlen = 9; break;
+    default: die("unsupport mstatus.vm = %x", vm);
+  }
+```
+
+我们这里是VM32，lever2意思是两级页表，ptesize是每个页表的字节数，对于32位os是4字节，vpn长度是10。这里如果对riscv页表不太熟悉可以看看 https://learningos.github.io/rcore_step_by_step_webdoc/docs/%E9%A1%B5%E8%A1%A8%E7%AE%80%E4%BB%8B.html 或者是riscv中文手册
+
+```
+    for (i = levels - 1; ; i --) {
+      p -= vpnlen;  // p = 32 - 10 = 22
+      // 之前mask = 0
+      mask = ~((~mask) >> vpnlen); //这行之后mask = 1111_1111_1000_00...._0000
+      uintptr_t vpn = ((va >> p) & ((1 << vpnlen) - 1)); //vpn = va[31:22]
+      uintptr_t *pte_p = (uintptr_t *)(a + vpn * ptesize); // a = root_page_table pte 相当于是root的偏移量
+      uintptr_t pte = *pte_p;
+```
+
+当第一次进入这个循环的时候, a就是上文中对应的root_page_table 找到的pte, 而pte_p就代表这个虚拟地址对应的一级页表的地址，然后pte就是一级页表(或者叫巨页)，页目录项的值了。
+
+进行一些检查之后，如果当前页表的内容是指向下一级的(X W R均为0)，那么更新a位当前pte对应的页表项基址:
+
+```
+ if ((pte & (PTE_X | PTE_W | PTE_R)) == 0)
+    {
+      a = (pte >> 10) << RISCV_PGSHIFT;
+    }
+```
+
+好了接下来涉及到一些硬件自定义的csr寄存器，这里需要结合着verilog代码来看:
+
+涉及到的寄存器主要及功能如下表：
+
+CSR寄存器数值 | 对应硬件宏       | 含义
+------------ | ----------       | ------
+0x7c0        | CSR_mtlbindex    |
+0x7c1        | CSR_mtlbvpn      |
+0x7c2        | CSR_mtlbmask     |
+0x7c3        | CSR_mtlbpte      |
+0x7c4        | CSR_mtlbptevaddr |
+
+
+
+
+
+
+
+
+
