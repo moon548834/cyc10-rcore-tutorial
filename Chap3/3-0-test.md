@@ -6,13 +6,25 @@
 
 需要注意的是，zwp的工作中使用的第三方软核picrov32并**不能完善地支持特权级架构，并且有一些自定义的指令**，所以第一个链接中针对该CPU进行了一些特定的宏定义。然而我采用的CPU是比较完善的，所以对于zwp的工作需要进行适当修改。
 
-## rv32ui指令
+## rv32ui指令(目前SDRAM测试并到这个测试下面)
+
 
 对于普通的用户级指令，我们是可以借鉴在picrov32中用到的方法，将所有的test_case一个一个测试。rv32ui测例位于 `./test/rv32ui` 下，直接make(默认的TARGET是rv32ui 或执行 `make TARGET=rv32ui` )即可生成相应的hex文件(并已经复制到quartus工程)，如果需要修改，需要注意的是以下几个位置：
 
 - ./test/firmware/sections.ld     串口地址，ROM，RAM地址及大小
 - ./test/firmware/start.S         可以通过注释修改进行的测例(此时需要删除 `/test/test`中的对应文件)
 - ./test/rv32ui/riscv_test.h      串口地址，即代码中0x02000000的部分 
+
+### SDRAM
+
+对于SDRAM而言，我单独创建了一个文件叫SDRAM.S，为什么这样呢，主要是想同时测sdram和指令，防止sdram对了其他指令又错的情况(好吧目前sdram自身就不对)。为了方便打印，我里面构造了一个很简单的函数`print_uint32`,输入及变动参数(我这里没有设置堆栈也就是直接改变寄存器的值，当然你也可以自己加如堆栈操作)
+
+```
+#input a3 change:a0,a1,a2,a3,a4,t3
+print_uint32:
+```
+
+> 但这引来一个新的问题，那就是因为如果你的SDRAM不能工作的话，你的push,pop的正确性也就无从谈起了，所以干脆不用显得逻辑更正确。
 
 ## rv32si指令与rv32mi指令
 
