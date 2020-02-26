@@ -1,2 +1,7 @@
-这是一个关于cyc10上运行rcore操作系统的指导书，目前还正在维护，尚未完成...
+这是一个关于[cyc10][]开发板上运行[rcore][https://rcore-os.github.io/rCore_tutorial_doc](第零章至第八章)的指导书,
+
+> 这个gitbook是基于64位记录的，我这里迁移到了32位
+
+
+
 
