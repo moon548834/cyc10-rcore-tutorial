@@ -1,5 +1,13 @@
 # 硬件说明
 
+## CPU与SOC简单介绍
+
+这个cpu采用的是lkx的工作 http://os.cs.tsinghua.edu.cn/oscourse/OS2017spring/projects/u1
+
+该cpu是经典的5级流水线架构，支持m态和s态特权级，并且具有mmu单元与tlb，无cache设计。
+
+soc则基于《自己动手写CPU》(雷思磊)结构，采用的是wishbone总线，其中sdram使用的是开源代码，uart自己重写(为了节省资源，只支持发送功能，且只有一个端口，波特率写死，无ready位)，片外flash目前尚不清楚如何工作，故采用片内rom，使用intel的.hex文件进行例化。总线交互也采用的是开源代码。
+
 ## 一些背景知识
 
 ### 五级流水架构
@@ -85,6 +93,8 @@ reg [`WishboneDataBus] mem[0:`DataMemNum-1];
 ### SDRAM结构
 
 **注意：实际上文中这个配置并不能跑起整个SDRAM，虽然也确实可以通过rv32ui的官方测例**
+
+**另外这个方式使用的开源的sdram程序，不是IP核**
 
 SDRAM(Synchronous Dynamic Random Access Memory)是同步动态随机访问存储器，同步是指memory工作需要同步时钟，内部命令的发送与数据的传输都以它为基准；动态是指存储阵列需要不断地刷新以保证数据不丢失；随机访问是指数据不是线性依次读写，而是可以自由指定地址进行读/写。
 
