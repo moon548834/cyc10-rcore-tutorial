@@ -41,6 +41,7 @@
     $ rustup update
 
 此时输入 `rustc --version` 应该会有类似于`rustc x.y.z (abcabcabc yyyy-mm-dd)`这样的信息, 接下来执行
+
     $ cargo install cargo-xbuild
 
 至此安装完毕
@@ -57,7 +58,7 @@ git checkout feature-4MB-bbl-without-compression
 ./build.sh
 ```
 
-> **虚拟机注意** 可能在运行./build.sh中遇到dummpy_payload下的dummpy_sbi.SS出现问题，这是由于共享文件夹引起软链接失效导致的，在WSL上则不会有问题 (此处感谢贺清同学)
+> **虚拟机注意** 可能在运行./build.sh中遇到dummpy_payload下的dummpy_sbi.S出现问题，这是由于共享文件夹引起软链接失效导致的，在WSL上则不会有问题 (此处感谢贺清同学)
 
 > 注意涉及OS部分操作目前仅支持在仿真环境下运行
 
