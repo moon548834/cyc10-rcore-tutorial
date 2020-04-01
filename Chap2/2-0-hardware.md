@@ -22,17 +22,6 @@ soc则基于《自己动手写CPU》(雷思磊)结构，采用的是wishbone总�
 
 > riscv的官方手册也是一个很好的帮助，另外国人也有一版电子书(翻译)介绍riscv架构的，在此也一并推荐 http://crva.io/documents/RISC-V-Reader-Chinese-v2p1.pdf
 
-### wishbone总线
-
-![](/IMG/wishbone.png) 
-
-wishbone总线只考虑单次的读写还是比较简单的，上面的端口比如 `rst`, `clk` 大多可以顾名思义，在此我也不赘述，握手协议简单地说就是 **CYC和STB同时拉高时表示请求开始，在整个过程中，保持高电平，一直等到slave响应ACK拉高后的下一周期，CYC，STB和ACK拉低，至此一个请求结束** 这里给一个简单的时序图(来自《自己动手写CPU》)，不考虑TAG信号，更详细资料请参阅 https://cdn.opencores.org/downloads/wbspec_b4.pdf 
-
-![](/IMG/wishbone2.png)
-
-> 请注意上升沿1和上升沿0之间实际可能还有若干个周期，并且ACK拉高的那个周期的上升沿CYC和STB还是高电平
-
-
 ## FPGA平台
 
 小脚丫STEP-CYC10是一款基于Intel Cyclone10设计的FPGA开发板，芯片型号是10CL016YU256C8G。另外，板卡上集成了USB Blaster编程器、SDRAM、FLASH等多种外设。板上预留了PCIE子卡插座，可方便进行扩展。其板载资源如下：
@@ -92,127 +81,20 @@ reg [`WishboneDataBus] mem[0:`DataMemNum-1];
 
 ### SDRAM结构
 
-**注意：实际上文中这个配置并不能跑起整个SDRAM，虽然也确实可以通过rv32ui的官方测例**
-
-**另外这个方式使用的开源的sdram程序，不是IP核**
-
-SDRAM(Synchronous Dynamic Random Access Memory)是同步动态随机访问存储器，同步是指memory工作需要同步时钟，内部命令的发送与数据的传输都以它为基准；动态是指存储阵列需要不断地刷新以保证数据不丢失；随机访问是指数据不是线性依次读写，而是可以自由指定地址进行读/写。
-
-SDRAM的内部有存储单元整列，给出行地址，列地址，就可以选择相应的存储单元，如下图中右侧部分所示。
-
-![](/IMG/sdram_frame.png)
-
-图上左侧的信号，对应于顶层文件的这些接口，有部分信号芯片手册上未标明如dq。 
-
-```verilog
-   output wire          sdr_clk_o,
-   output wire          sdr_cs_n_o,
-   output wire          sdr_cke_o,
-   output wire          sdr_ras_n_o,
-   output wire          sdr_cas_n_o,
-   output wire          sdr_we_n_o,
-   output wire [1:0]    sdr_dqm_o,
-   output wire [1:0]    sdr_ba_o,
-   output wire [11:0]   sdr_addr_o,
-   inout  wire [15:0]   sdr_dq_io,
-```
-
-接口说明如下：
-
-| 序号    | 接口名  | 宽度(bit) |   输入/输出 | 作用
-| :----  | :------ | :----     |   :-----   | :--------------
-| 1      | ADDR    | 12        |   输入      | 地址线
-| 2      | CLK     | 1         |   输入      | 时钟
-| 3      | CKE     | 1         |   输入      | 时钟使能
-| 4      | RAS     | 1         |   输入      | 行地址选通，低有效
-| 5      | CS      | 1         |   输入      | 片选，低有效
-| 6      | CAS     | 1         |   输入      | 列地址选通，低有效
-| 7      | WE      | 1         |   输入      | 写使能，低有效
-| 8      | DQM     | 2         |   输入      | 字节选择和输出使能，低有效
-| 9      | DQ      | 16        |   双向      | 数据线
-| 10     | BA      | 2         |   输入      | bank选择
-
-对于SDRAM更深刻的介绍，需要很大的篇幅，由于我们并非需要直接驱动SDRAM，而只需要驱动SDRAM的控制器，所以这里就不再展开，《自己动手写CPU》中关于Flash控制器有更多的描述。这里介绍的目的是，对SDRAM有一个基本的认识即可。
 
 ### SDRAM控制器
-
-这个SDRAM控制器取自于OpenCores,该SDRAM控制器：
-- 支持SDRAM的数据总线宽度可以为8,16,32
-- 支持4个Bank的SDRAM
-- 自动控制刷新
-- 支持所有标准的SDRAm功能
-- 支持 wishbone B总线
-
-这是一个功能十分完善的控制器，根据说明，在实际使用过程中，**无需修改如何源码**我们只需配置如下参数就可以用了！
-
-
-| 序号   | 参数名            | 宽度(bit) |   输入/输出 | 作用                                                                     |
-| :-----| :--------------   | :-------  |  :-----    | :---------------------------------                                       |
-| 1     | cfg_sdr_width     | 2         |   输入      | SDRAM的数据总线宽度:<br />   00 —— 32位SDRAM<br />  01 —— 16位SDRAM<br />  1x —— 8位SDRAM   | 
-| 2     | cfg_sdr_en        | 1         |   输入      | SDRAM控制器使能信号                                                       |
-| 3     | cfg_sdr_colbits   | 2         |   输入      | 列地址宽度:<br />00 —— 8bit<br /> 01 —— 9bit<br /> 10 —— 10bit<br />11 —— 11bit             |      
-| 4     | cfg_sdr_mode_reg  | 13        |   输入      | 模式寄存器                                                                |
-| 5     | cfg_sdr_tras_d    | 4         |   输入      | tRAS的值，单位是时钟周期                                                   |
-| 6     | cfg_sdr_trp_d     | 4         |   输入      | tRP的值，单位是时钟周期                                                    |
-| 7     | cfg_sdr_trcd_d    | 4         |   输入      | tRCD的值，单位是时钟周期                                                   |
-| 8     | cfg_sdr_cas       | 3         |   输入      | CL地值，单位是时钟周期                                                     |
-| 9     | cfg_sdr_trcar_d   | 4         |   双向      | tRC的值，单位是时钟周期                                                    |
-| 10    | cfg_sdr_twr_d     | 4         |   输入      | tWR的值，单位是时钟周期                                                    |
-| 11    | cfg_sdr_rfsh      | 12        |   输入      | 自动刷新间隔，单位是时钟周期                                                |
-| 12    | cfg_sdr_rfmax     | 3         |   输入      | 每次刷新的最大行数                                                         |
-| 13    | cfg_req_depth     | 2         |   输入      | 请求缓存的数量                                                            |
-
-### SDRAM参数确定
-
-那么接下来就是通过查阅手册来确定这些参数了：
-
-前三个比较好确定，宽度是16，所以值是 2'b11； 使能自然是1'b1；列地址宽度是8，所以值是2'b00。
-
-关于模式寄存器的结构如下，或者查阅芯片手册：
-
-![](/IMG/sdram_config_mode_reg.png)
-
-模式寄存器配置为 `13'b0_0000_0011_0001`，表示CAS延时为3个时钟周期，突发长度为2(一次16bits，两次正好32bits)，突发模式是线性。
-
-关于有关时间的参数，见下表，或者查阅芯片手册进行配置。
-
-> 手册中给出的-5 -6 -7代表了不同频率的设置值，最低的也是133MHz，事实上我在下板的时候用133MHz也会报WNS违约，后来发现**降低SDRAM主频**也是可以工作的。
-
-![](/IMG/sdram_config_time.png)
-
-> 参考《自己动手写CPU》cfg_sdr_cas要比模式寄存器中的值大一，故是3'b100。
-
-关于rfsh的配置：芯片45S16400的每个bank有4096行，此处设置每次最大的刷新行数rfmax为4，所以在64ms内要求有 4096/4 = 1024 次刷新。每次刷新的间隔即是(64/1024)ms，SOC使用的时钟频率是30MHz，计算 30 * 1e6 * 64 * 1e-3 * / 1024 得到1875，故设置为对应的二进制 12'b011101010011。 
-
-cfg_req_depth尚不清楚有何影响，采取和《自己动手写CPU》相同设置未发现错误。
-
-最后的参数如下：
-
-```verilog
-    .cfg_req_depth(2'b11),
-    .cfg_sdr_en(1'b1),
-    .cfg_sdr_mode_reg(13'b0000000110001),
-    .cfg_sdr_tras_d(4'b1000),
-    .cfg_sdr_trp_d(4'b0010),
-    .cfg_sdr_trcd_d(4'b0010),
-    .cfg_sdr_cas(3'b100),
-    .cfg_sdr_trcar_d(4'b1010),
-    .cfg_sdr_twr_d(4'b0010),
-    .cfg_sdr_rfsh(12'b011101010011),
-    .cfg_sdr_rfmax(3'b100),
-    .cfg_sdr_width(2'b01),
-    .cfg_colbits(2'b00)
-```
-
-### SDRAM问题
 
 我在使用SDRAM的时候使用了两种方法，但最后都以失败告终，在此记录，如果可能可以帮助到后来者。
 
 方法一、 使用手把手中的sdram开源文件
 
-过程如上节所述，结果是只能使用极其有限的一部分sdram空间可能只有几十KB。
+过程见附录所述，结果是只能使用极其有限的一部分sdram空间可能只有几十KB。
+
+**注意：这个配置并不能跑起整个SDRAM，虽然也确实可以通过rv32ui的官方测例**
 
 方法二、 使用qsys中的sdram
+
+> 感谢贺清同学的帮助，目前问题是运行一分钟后SDRAM可以正常使用，一开始还是有乱码
 
 这种方法参考了lxs中的实现，在它的soc中，全部环境都采用的是200MHz的频率，并且通过quartus的qsys直接搭建，简便明了。使用qsys的SDRAMIP核从他的实验中验证是可以行的通的，那么**理论**在我这里加一个总线转换桥也是可以跑的。
 
@@ -226,51 +108,30 @@ cfg_req_depth尚不清楚有何影响，采取和《自己动手写CPU》相同�
 
 参数如表，另外需要注意的是左侧信号，`sdram`对应的信号为`zs_xxx`，这里和实际的物理sdram接口对应没有问题，而对应的`avalon`总线，注意地址是[21:0]，数据是[15:0]，那么也就是说这里面总线的最小寻址单元是1个16bits的半字，所以我们这个转换桥，还需要做一个32位到16位的工作，实际上这个avalon是32位的更方便，因为这样就不要我们转换桥做额外的工作了，但是当我设定16位宽的时候，sdram和总线接口都被固定为16位，不能修改。设定完这些后保存，在`.bb`中找到所有接口信号明确的位宽
 
-```verilog
-module sdram (
-	avalon_sdram_address,
-	avalon_sdram_byteenable_n,
-	avalon_sdram_chipselect,
-	avalon_sdram_writedata,
-	avalon_sdram_read_n,
-	avalon_sdram_write_n,
-	avalon_sdram_readdata,
-	avalon_sdram_readdatavalid,
-	avalon_sdram_waitrequest,
-	clk_clk,
-	reset_reset_n,
-	sdram_addr,
-	sdram_ba,
-	sdram_cas_n,
-	sdram_cke,
-	sdram_cs_n,
-	sdram_dq,
-	sdram_dqm,
-	sdram_ras_n,
-	sdram_we_n);	
+### 转换桥
 
-	input	[21:0]	avalon_sdram_address;
-	input	[1:0]	avalon_sdram_byteenable_n;
-	input		avalon_sdram_chipselect;
-	input	[15:0]	avalon_sdram_writedata;
-	input		avalon_sdram_read_n;
-	input		avalon_sdram_write_n;
-	output	[15:0]	avalon_sdram_readdata;
-	output		avalon_sdram_readdatavalid;
-	output		avalon_sdram_waitrequest;
-	input		clk_clk;
-	input		reset_reset_n;
-	output	[11:0]	sdram_addr;
-	output	[1:0]	sdram_ba;
-	output		sdram_cas_n;
-	output		sdram_cke;
-	output		sdram_cs_n;
-	inout	[15:0]	sdram_dq;
-	output	[1:0]	sdram_dqm;
-	output		sdram_ras_n;
-	output		sdram_we_n;
-endmodule
-```
+#### WISHBONE总线与AVALON总线:
+
+| WISHBONE | 位宽 | 作用        |AVALON   | 位宽 | 作用        |
+| -------- | ---- | ----------- | ----------- | ---- | ----------- |
+|CLK	   |1	  |时钟输入     | CLK	      |1	 |时钟输入     |
+|ADDR_O	   |32	  |地址线       | ADDRESS     |22	 |地址线       |
+|DATA_O	   |32	  |数据线(输出) | WRITEDATA   |16    |数据线(输出) |
+|DATA_I	   |32	  |数据线(输入) | READDATA    |16    |数据线(输入) |
+|WE_O	   |1	  |写使能       | WRITE       |1     |写使能	   |
+|SEL_O	   |4	  |选通         | BYTEENABLE  |4     |选通         |
+|STB_O	   |1	  |使能         | CHIPSELECT  |1     |片选         |
+|ACK_I	   |1	  |确认         | READ        |1     |读使能       |
+|CYC_O	   |1	  |使能         | WRITREQUEST |1     |等待         |
+| 		   |	  |				| READVAILD   |1     |读确认       |
+
+两种总线读写示意图：
+
+![](/IMG/wishbone_avalon.PNG)
+ 
+WISHBONE协议最关键的信号是CYC、STB与ACK， CYC和STB同时拉高时表示请求开始，在整个过程中，保持高电平，一直等到slave响应ACK拉高后的下一周期，CYC，STB和ACK拉低，至此一个请求结束。
+
+对于AVALON协议而言，关键的几个信号是READ、WRITE、WAIT和READVALID。当READ/WRITE拉高代表读或写的请求，但是与WISHBONE不同的是，这个请求一只保持到WAIT变低，在WAIT为高时，从机处理请求，对于写请求来说，只需等待WAIT变为低电平就可以，而对于读请求来说还需要等待READVALID变为高电平，才表明总线交互结束。
 
 有了这部分之后，下面开始总线转换桥的编写，参见`wb32_avalon16`代码，这里不具体分析，因为我也不确定是否完全正确，大致的思路是构建一个状态机，当`wishbone`总线上有请求时，也就是`cyc`和`stb`都为1，那么就开始进行转换工作，在开始之前，我有一个等待cnt的操作，出于担心时序的影响，因为`setup time`小于0，所以又等待了十几个sdram频率的周期。这里SDRAM主频150MHz,总线20MHz。
 
@@ -279,6 +140,7 @@ endmodule
 需要注意的是`avalon`总线中关于`read`,`write`,和`byteenable`都是低有效的，准确的说应该是对于qsys中这个sdram是这样规定(低有效)的，所以处理的时候需要多加小心。
 
 然后在顶层例化，并在pll中添加相关时钟即可，另外这里需要注意一点**时钟的相位**，lxs的工作里面sdram给出来了两个时钟，1个角度为0，一个角度为-68，这里配置的原因请参考IP核手册，我在查阅资料的时候发现确实需要相位不同，需要调整，这里直接采用lxs中的数值。
+
 
 ## CONFIG控制器
 
