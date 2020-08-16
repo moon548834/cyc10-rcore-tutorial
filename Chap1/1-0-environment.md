@@ -76,6 +76,18 @@ git checkout feature-4MB-bbl-without-compression
 
 这个分支对应于仿真环境下(modelsim)可以跑操作系统,只需看**wishbone_cyc10_os**这个工程即可。对于这个分支而言需要先运行`build.sh`这样就可以正常仿真了。
 
+**重点:** 需要注意的是，如果重新编译硬件，需要先在ram,rom中将容量修改为较小的数值，这样编译(只需要 start analysis & synthesis)才可以通过,之后等到编译完成之后，再把容量修改成4MB对应的数值，此时运行仿真即可得到正常结果。
+
+注意需要修改 ram_wishbone.v 和 rom_wishbone_simulation.v 这**两个**文件
+```
+`define DataMemNum (4*1024*1024)
+`define DataMemNumLog2 22
+//`define DataMemNum (64)
+//`define DataMemNumLog2 6
+```
+
+
+
 ### 分支：master
 
 这个分支下只需要考虑工程**wishbone_cyc10**即可, 用的是第三方SDRAM IP核，可以下板(SDRAM有8MB,但实际上只有部分空间可以使用)。
